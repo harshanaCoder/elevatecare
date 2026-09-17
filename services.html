@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services - ElevateCare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans flex h-screen overflow-hidden">
+
+    <div class="w-64 bg-gray-900 text-white flex flex-col p-5 shadow-lg z-10 overflow-y-auto">
+        <h2 class="text-2xl font-bold mb-8 text-blue-400"><i class="fa-solid fa-elevator"></i> ElevateCare</h2>
+        <ul class="space-y-2">
+            <a href="dashboard.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-chart-line w-6"></i> Dashboard</li></a>
+            <a href="pending.html" class="block"><li class="hover:bg-gray-800 text-yellow-400 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-mobile-screen w-6"></i> App Reviews</li></a>
+            <a href="lifts.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-building w-6"></i> Lifts / Escalators</li></a>
+            <a href="breakdowns.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-triangle-exclamation w-6"></i> Breakdowns Form</li></a>
+            <a href="services.html" class="block"><li class="bg-blue-600 p-3 rounded-lg cursor-pointer font-semibold mb-2 shadow"><i class="fa-solid fa-screwdriver-wrench w-6"></i> Services</li></a>
+            <a href="reports.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer transition"><i class="fa-solid fa-chart-pie w-6"></i> Analytics & Reports</li></a>
+        </ul>
+    </div>
+
+    <div class="flex-1 p-8 overflow-y-auto">
+        
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Maintenance & Services</h1>
+                <p class="text-gray-500 font-semibold">Schedule, track, and manage routine elevator servicing.</p>
+            </div>
+            <button onclick="switchTab('add-service')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Schedule New Service
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            
+            <div class="flex border-b border-gray-200 bg-gray-50 px-6 pt-4 gap-6">
+                <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-btn pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600">
+                    <i class="fa-solid fa-list-check mr-1"></i> Upcoming & Overdue
+                </button>
+                <button onclick="switchTab('add-service')" id="tab-add-service" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800">
+                    <i class="fa-solid fa-calendar-plus mr-1"></i> Schedule New
+                </button>
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> Service History
+                </button>
+            </div>
+
+            <div class="p-6">
+                
+                <div id="content-schedule" class="tab-content block">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
+                                <th class="py-3 px-4">Scheduled Date</th>
+                                <th class="py-3 px-4">Unit No</th>
+                                <th class="py-3 px-4">Service Type</th>
+                                <th class="py-3 px-4">Assigned To</th>
+                                <th class="py-3 px-4 text-center">Status</th>
+                                <th class="py-3 px-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcomingTableBody" class="divide-y divide-gray-100 text-sm">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading schedules...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="content-add-service" class="tab-content hidden max-w-3xl mx-auto">
+                    <form id="serviceForm" class="space-y-5">
+                        <div class="grid grid-cols-2 gap-5">
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Select Unit (BD 2) *</label>
+                                <select id="unit_no" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 font-bold text-blue-700" required>
+                                    <option value="">-- Choose Unit --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Service Date *</label>
+                                <input type="date" id="service_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Service Type *</label>
+                                <select id="service_type" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500" required>
+                                    <option value="">-- Select Type --</option>
+                                    <option value="Routine Monthly Service">Routine Monthly Service</option>
+                                    <option value="Quarterly Checkup">Quarterly Checkup</option>
+                                    <option value="Annual Full Inspection">Annual Full Inspection</option>
+                                    <option value="Oil & Lubrication">Oil & Lubrication</option>
+                                    <option value="Rope & Governor Check">Rope & Governor Check</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Assign Technician(s) *</label>
+                                <div class="w-full border rounded-lg p-2 text-sm bg-white h-24 overflow-y-auto outline-none focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Rifki" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Rifki</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dias" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Dias</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharusha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Tharusha</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Pathum" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Pathum</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Kamal" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Kamal</span></label>
+                                </div>
+                            </div>
+
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Special Notes / Instructions (Optional)</label>
+                                <textarea id="notes" rows="2" placeholder="Any specific areas to check... (Optional)" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+                        </div>
+                        <div id="formMessage" class="hidden p-3 mt-3 rounded text-sm font-bold text-center"></div>
+                        <div class="flex justify-end pt-4 border-t">
+                            <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg shadow-md transition">
+                                <i class="fa-solid fa-calendar-plus mr-2"></i> Save Schedule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="content-history" class="tab-content hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
+                                <th class="py-3 px-4">Completed Date</th>
+                                <th class="py-3 px-4">Unit No</th>
+                                <th class="py-3 px-4">Service Type</th>
+                                <th class="py-3 px-4">Technicians</th>
+                                <th class="py-3 px-4 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-gray-100 text-sm">
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                el.classList.add('text-gray-500');
+            });
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            document.getElementById('content-' + tabName).classList.add('block');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500');
+            document.getElementById('tab-' + tabName).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+        }
+
+        function populateBD2Units() {
+            const bd2Units = [
+                "PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36",
+                "SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09",
+                "FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08",
+                "ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"
+            ];
+            
+            const unitSelect = document.getElementById('unit_no');
+            bd2Units.forEach(unit => {
+                const opt = document.createElement('option');
+                opt.value = unit;
+                opt.textContent = unit;
+                unitSelect.appendChild(opt);
+            });
+        }
+
+        async function loadServices() {
+            try {
+                const response = await fetch('http://localhost:5000/api/services');
+                const data = await response.json();
+                
+                let upcomingHTML = '';
+                let historyHTML = '';
+                const today = new Date().toISOString().split('T')[0];
+
+                data.forEach(row => {
+                    const dateObj = new Date(row.service_date);
+                    const formattedDate = dateObj.toISOString().split('T')[0];
+                    
+                    if (row.status === 'Scheduled') {
+                        const isOverdue = formattedDate < today;
+                        const dateStyle = isOverdue ? 'text-red-500' : 'text-gray-700';
+                        const statusBadge = isOverdue 
+                            ? '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-black uppercase">Overdue</span>'
+                            : '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-black uppercase">Upcoming</span>';
+
+                        upcomingHTML += `
+                            <tr class="hover:bg-gray-50 border-b">
+                                <td class="py-3 px-4 font-bold ${dateStyle}">${formattedDate} <br><span class="text-[10px] text-gray-400 font-normal">${isOverdue ? 'Passed' : 'Scheduled'}</span></td>
+                                <td class="py-3 px-4 font-black text-blue-600">${row.unit_no}</td>
+                                <td class="py-3 px-4 font-semibold text-gray-800">${row.service_type}</td>
+                                <td class="py-3 px-4 text-xs font-bold text-gray-600"><i class="fa-solid fa-user-gear mr-1"></i> ${row.technicians}</td>
+                                <td class="py-3 px-4 text-center">${statusBadge}</td>
+                                <td class="py-3 px-4 text-center">
+                                    <button onclick="markServiceDone(${row.id})" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded text-[11px] font-bold shadow-sm transition">
+                                        <i class="fa-solid fa-check mr-1"></i> Mark Done
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    } else if (row.status === 'Completed') {
+                        historyHTML += `
+                            <tr class="hover:bg-gray-50 border-b">
+                                <td class="py-3 px-4 font-bold text-gray-600">${formattedDate}</td>
+                                <td class="py-3 px-4 font-black text-gray-800">${row.unit_no}</td>
+                                <td class="py-3 px-4 font-semibold text-gray-600">${row.service_type}</td>
+                                <td class="py-3 px-4 text-xs font-bold text-gray-500">${row.technicians}</td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Done</span>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                document.getElementById('upcomingTableBody').innerHTML = upcomingHTML || '<tr><td colspan="6" class="text-center py-8 text-gray-400 font-bold">No upcoming services scheduled.</td></tr>';
+                document.getElementById('historyTableBody').innerHTML = historyHTML || '<tr><td colspan="5" class="text-center py-8 text-gray-400 font-bold">No completed services yet.</td></tr>';
+
+            } catch (error) {
+                console.error("Error fetching services:", error);
+            }
+        }
+
+  // 3. Add New Service Data
+        document.getElementById('serviceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('formMessage');
+
+            const selectedTechs = Array.from(document.querySelectorAll('.tech-checkbox:checked')).map(cb => cb.value).join(' / ');
+            
+            if (!selectedTechs) {
+                alert("Please select at least one technician!");
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const formData = {
+                unit_no: document.getElementById('unit_no').value,
+                service_date: document.getElementById('service_date').value,
+                service_type: document.getElementById('service_type').value,
+                technicians: selectedTechs, 
+                notes: document.getElementById('notes').value.trim() || "-"
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/services', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    msg.className = "p-3 mt-3 rounded text-sm font-bold text-center bg-green-100 text-green-700 block";
+                    msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + result.message;
+                    document.getElementById('serviceForm').reset();
+                    document.querySelectorAll('.tech-checkbox').forEach(cb => cb.checked = false); 
+                    loadServices(); 
+                } else {
+                    // ⚠️ METHANA WENAS KALA: Error eka screen ekema pennanawa ⚠️
+                    msg.className = "p-3 mt-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block";
+                    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Server Error: ' + (result.error || "Unknown Error");
+                    alert("Developer Info: " + result.error); // Alert ekakuth danawa pahasuwata
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Network error: Cannot connect to Node server!");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-calendar-plus mr-2"></i> Save Schedule';
+                btn.disabled = false;
+                setTimeout(() => msg.classList.add('hidden'), 5000);
+            }
+        });
+
+        async function markServiceDone(id) {
+            if(!confirm("Are you sure you want to mark this service as Completed?")) return;
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/services/${id}`, { method: 'PUT' });
+                if (response.ok) {
+                    loadServices();
+                } else {
+                    alert("Failed to update status.");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        window.onload = function() {
+            populateBD2Units(); 
+            loadServices();     
+        };
+    </script>
+</body>
+</html>

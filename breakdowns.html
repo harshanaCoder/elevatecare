@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakdowns - ElevateCare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans flex h-screen overflow-hidden">
+
+    <div class="w-64 bg-gray-900 text-white flex flex-col p-5 shadow-lg z-10 overflow-y-auto">
+        <h2 class="text-2xl font-bold mb-8 text-blue-400"><i class="fa-solid fa-elevator"></i> ElevateCare</h2>
+        <ul class="space-y-2">
+            <a href="dashboard.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-chart-line w-6"></i> Dashboard</li></a>
+            <a href="pending.html" class="block"><li class="hover:bg-gray-800 text-yellow-400 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-mobile-screen w-6"></i> App Reviews</li></a>
+            <a href="lifts.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-building w-6"></i> Lifts / Escalators</li></a>
+            <a href="breakdowns.html" class="block"><li class="bg-blue-600 p-3 rounded-lg cursor-pointer font-semibold mb-2 shadow"><i class="fa-solid fa-triangle-exclamation w-6"></i> Breakdowns Form</li></a>
+            <a href="services.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-screwdriver-wrench w-6"></i> Services</li></a>
+            <a href="reports.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer transition"><i class="fa-solid fa-chart-pie w-6"></i> Analytics & Reports</li></a>
+        </ul>
+    </div>
+
+    <div class="flex-1 p-8 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">New Breakdown Entry</h1>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            
+            <form id="breakdownForm" class="space-y-6">
+                
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-phone-volume text-blue-500 mr-2"></i>Informed Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Informed Date *</label>
+                            <input type="date" id="informed_date" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Informed Time *</label>
+                            <input type="time" id="informed_time" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Informed By (Name) *</label>
+                            <input type="text" id="informed_by" required placeholder="e.g. Mr. Sunil (Sec)" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Issue Details</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">1. Select Building *</label>
+                            <select id="bldg_select" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Choose Building --</option>
+                                <option value="BD_01">BD_01</option>
+                                <option value="BD_02">BD_02</option>
+                                <option value="BD_03">BD_03</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">2. Select Lift Type *</label>
+                            <select id="type_select" required disabled class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Choose Type --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">3. Select Unit No *</label>
+                            <select id="unit_no" required disabled class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 font-bold text-blue-700">
+                                <option value="">-- Choose Unit --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Breakdown Category *</label>
+                            <select id="category" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700">
+                                <option value="">-- Select Fault Type --</option>
+                                <option>Door System Failure</option>
+                                <option>Minor Breakdown</option>
+                                <option>Electrical / Control Failure</option>
+                                <option>Mechanical Failure</option>
+                                <option>Power Failure</option>
+                                <option>Communication Failure</option>
+                                <option>Safety Error</option>
+                                <option>Major Breakdown</option>
+                                <option>Passenger Entrapment</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Nature of Breakdown *</label>
+                            <textarea id="nature_of_breakdown" required rows="1" placeholder="Briefly describe the issue..." class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-screwdriver-wrench text-green-500 mr-2"></i>Action & Attendance</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Attended Date</label>
+                            <input type="date" id="attended_date" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Attended Time</label>
+                            <input type="time" id="attended_time" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                       <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Attended By (Select Technicians) *</label>
+                            <div class="w-full border rounded p-2 text-sm bg-white h-24 overflow-y-auto border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Rifki" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Rifki</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dias" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Dias</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharusha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Tharusha</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Pathum" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Pathum</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Kamal" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Kamal</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharuka" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Tharuka</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sadeepa" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Sadeepa</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Adhikari" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Adhikari</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Minhaj" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Minhaj</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Shehan" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Shehan</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Amos" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Amos</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Ashen" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Ashen</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharindu" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Tharindu</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Wijerathne" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Wijerathne</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sampath" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Sampath</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Somasiri" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Somasiri</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dc" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">DC</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Botheju" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Botheju</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Deshan" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Deshan</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sachintha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Sachintha</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Janith" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">Janith</span></label>
+                            </div>
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Actions Taken</label>
+                            <input type="text" id="actions_taken" placeholder="What was fixed?" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Job Status *</label>
+                            <select id="job_status" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-700">
+                                <option value="Pending">Pending (Not Fixed)</option>
+                                <option value="Job Done">Job Done (Fixed)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="statusMessage" class="hidden p-3 rounded text-sm font-bold text-center"></div>
+
+                <div class="flex justify-end pt-4 border-t">
+                    <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Save to Database
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. DYNAMIC DROPDOWNS LOGIC
+        const liftData = {
+            "BD_01": {
+                "PL": ["PL 1.01", "PL 1.02", "PL 1.03", "PL 1.04", "PL 1.05", "PL 1.06", "PL 1.07", "PL 1.08"],
+                "SL": ["SL 1.01", "SL 1.02"],
+                "ES": ["ES 1.03a", "ES 1.03b", "ES 1.04a", "ES 1.04b"]
+            },
+            "BD_02": {
+                "PL": ["PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36"],
+                "SL": ["SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09"],
+                "FSL": ["FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08"],
+                "ES": ["ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"]
+            },
+            "BD_03": {
+                "PL": ["PL 3.01", "PL 3.02", "PL 3.03", "PL 3.04"],
+                "FSL": ["FSL 3.01", "FSL 3.02", "FSL 3.03", "FSL 3.04", "FSL 3.05", "FSL 3.06"],
+                "ES": ["ES 3.01a", "ES 3.01b", "ES 3.02a", "ES 3.02b", "ES 3.03a", "ES 3.03b"]
+            }
+        };
+
+        const bldgSelect = document.getElementById('bldg_select');
+        const typeSelect = document.getElementById('type_select');
+        const unitSelect = document.getElementById('unit_no');
+
+        bldgSelect.addEventListener('change', function() {
+            typeSelect.innerHTML = '<option value="">-- Choose Type --</option>';
+            unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+            typeSelect.disabled = true;
+            unitSelect.disabled = true;
+
+            if (this.value) {
+                const categories = Object.keys(liftData[this.value]);
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    if(cat === 'PL') opt.textContent = 'Passenger Lift (PL)';
+                    if(cat === 'SL') opt.textContent = 'Service Lift (SL)';
+                    if(cat === 'FSL') opt.textContent = 'Freight Service Lift (FSL)';
+                    if(cat === 'ES') opt.textContent = 'Escalator (ES)';
+                    typeSelect.appendChild(opt);
+                });
+                typeSelect.disabled = false;
+            }
+        });
+
+        typeSelect.addEventListener('change', function() {
+            unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+            unitSelect.disabled = true;
+
+            const bldg = bldgSelect.value;
+            const cat = this.value;
+
+            if (bldg && cat && liftData[bldg][cat]) {
+                liftData[bldg][cat].forEach(unit => {
+                    const opt = document.createElement('option');
+                    opt.value = unit;
+                    opt.textContent = unit;
+                    unitSelect.appendChild(opt);
+                });
+                unitSelect.disabled = false;
+            }
+        });
+
+        // 2. DATABASE SUBMISSION LOGIC
+        document.getElementById('breakdownForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); 
+            
+            const btn = document.getElementById('submitBtn');
+            const statusDiv = document.getElementById('statusMessage');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const formData = {
+                informed_date: document.getElementById('informed_date').value,
+                informed_time: document.getElementById('informed_time').value,
+                informed_by: document.getElementById('informed_by').value,
+                unit_no: document.getElementById('unit_no').value, // Dan meka select eken ena value eka!
+                category: document.getElementById('category').value,
+                nature_of_breakdown: document.getElementById('nature_of_breakdown').value,
+                attended_date: document.getElementById('attended_date').value || null,
+                attended_time: document.getElementById('attended_time').value || null,
+                attended_by: Array.from(document.querySelectorAll('.tech-checkbox:checked')).map(cb => cb.value).join(' / '),
+                job_status: document.getElementById('job_status').value,
+                actions_taken: document.getElementById('actions_taken').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/breakdowns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-green-100 text-green-700 block mt-4";
+                    statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + result.message;
+                    document.getElementById('breakdownForm').reset();
+                    
+                    // Reset dropdowns explicitly
+                    typeSelect.innerHTML = '<option value="">-- Choose Type --</option>';
+                    unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+                    typeSelect.disabled = true;
+                    unitSelect.disabled = true;
+                    document.querySelectorAll('.tech-checkbox').forEach(cb => cb.checked = false);
+                } else {
+                    statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block mt-4";
+                    statusDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Error: ' + result.error;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block mt-4";
+                statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Server error! Is Node.js running?';
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save to Database';
+                btn.disabled = false;
+                setTimeout(() => { statusDiv.classList.add('hidden'); }, 4000);
+            }
+        });
+    </script>
+</body>
+</html>

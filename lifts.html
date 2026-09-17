@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Management - ElevateCare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <div class="w-64 bg-gray-900 text-white flex flex-col p-5 shadow-lg z-10 overflow-y-auto">
+        <h2 class="text-2xl font-bold mb-8 text-blue-400"><i class="fa-solid fa-elevator"></i> ElevateCare</h2>
+        <ul class="space-y-2">
+            <a href="dashboard.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-chart-line w-6"></i> Dashboard</li></a>
+            <a href="pending.html" class="block"><li class="hover:bg-gray-800 text-yellow-400 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-mobile-screen w-6"></i> App Reviews</li></a>
+            <a href="lifts.html" class="block"><li class="bg-blue-600 p-3 rounded-lg cursor-pointer font-semibold mb-2 shadow"><i class="fa-solid fa-building w-6"></i> Lifts / Escalators</li></a>
+            <a href="breakdowns.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-triangle-exclamation w-6"></i> Breakdowns</li></a>
+            <a href="services.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-screwdriver-wrench w-6"></i> Services</li></a>
+            <a href="reports.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer transition"><i class="fa-solid fa-chart-pie w-6"></i> Analytics & Reports</li></a>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Top Selection Bar -->
+        <div class="bg-white shadow-sm z-0 relative px-8 py-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Elevator & Escalator Details</h1>
+            
+            <div class="flex gap-4 items-end">
+                <div class="flex-1">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">1. Select Building</label>
+                    <select id="buildingSelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 bg-gray-50">
+                        <option value="">-- Choose Building --</option>
+                        <option value="BD_01">BD_01 </option>
+                        <option value="BD_02">BD_02 </option>
+                        <option value="BD_03">BD_03 </option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">2. Select Category</label>
+                    <select id="categorySelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 bg-gray-50" disabled>
+                        <option value="">-- Choose Category --</option>
+                        <option value="PL">Passenger Lift (PL)</option>
+                        <option value="SL">Service Lift (SL)</option>
+                        <option value="FSL">Freight Service Lift (FSL)</option>
+                        <option value="ES">Escalator (ES)</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">3. Select Unit No</label>
+                    <select id="unitSelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-700 bg-blue-50 border-blue-200" disabled>
+                        <option value="">-- Choose Unit --</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="viewDataBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg shadow transition h-[42px] flex items-center gap-2 opacity-50 cursor-not-allowed">
+                        <i class="fa-solid fa-magnifying-glass"></i> View Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Container -->
+        <div id="detailsContainer" class="flex-1 overflow-y-auto p-8 bg-gray-100 hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                
+                <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-6 text-white flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-black tracking-wider"><span id="displayUnitNo">SL 2.02</span> <span id="displayCategoryTag" class="text-sm font-normal text-gray-300 ml-2 border border-gray-500 px-2 py-1 rounded">Service Lift</span></h2>
+                        <p class="text-gray-300 text-sm mt-1"><i class="fa-solid fa-location-dot mr-1"></i> Building: <span id="displayBuilding">BD_02</span></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-green-500 text-white font-bold px-3 py-1 rounded-full text-xs"><i class="fa-solid fa-check-circle mr-1"></i> Active</span>
+                    </div>
+                </div>
+
+                <div class="flex border-b border-gray-200 bg-gray-50 px-6 pt-4 gap-6">
+                    <button onclick="switchTab('details')" id="tab-details" class="tab-btn pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600">
+                        <i class="fa-solid fa-circle-info mr-1"></i> Unit Details
+                    </button>
+                    <button onclick="switchTab('breakdown')" id="tab-breakdown" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Breakdown History
+                    </button>
+                    <button onclick="switchTab('service')" id="tab-service" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800">
+                        <i class="fa-solid fa-screwdriver-wrench mr-1"></i> Service History
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    
+                    <!-- TAB 1: Specs -->
+                    <div id="content-details" class="tab-content block">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Technical Specifications</h3>
+                        <form id="specsForm" class="grid grid-cols-2 gap-6">
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Motor Details</label><input type="text" id="spec_motor" placeholder="e.g. Gearless Traction 15kW" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Controller Type</label><input type="text" id="spec_controller" placeholder="e.g. Monarch NICE3000+" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
+                            
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">ELD Type (Emergency Lowering)</label><input type="text" id="spec_eld" placeholder="e.g. ARD-220V" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">ELD Battery Specification</label><input type="text" id="spec_battery" placeholder="e.g. 12V 7Ah x 4" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
+                            
+                            <div id="uAngleSection" class="col-span-2 grid grid-cols-2 gap-6">
+                                <div class="col-span-2 mt-2"><h4 class="font-bold text-gray-700 border-b pb-1">U-Angle Details (For Lifts Only)</h4></div>
+                                <div><label class="block text-xs font-bold text-gray-500 mb-1">U-Angle (Sin Value)</label><input type="text" id="spec_sin" placeholder="0.000" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-mono"></div>
+                                <div><label class="block text-xs font-bold text-gray-500 mb-1">U-Angle (Cos Value)</label><input type="text" id="spec_cos" placeholder="0.000" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-mono"></div>
+                            </div>
+                            
+                            <div class="col-span-2 flex justify-end mt-4 items-center gap-4">
+                                <span id="specMessage" class="text-sm font-bold"></span>
+                                <button type="submit" id="saveSpecsBtn" class="bg-gray-800 hover:bg-black text-white font-bold py-2.5 px-6 rounded-lg shadow transition"><i class="fa-solid fa-save mr-2"></i> Update Specifications</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- TAB 2: Breakdowns -->
+                    <div id="content-breakdown" class="tab-content hidden">
+                        <table class="w-full text-left border-collapse border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b">
+                                    <th class="py-3 px-4">Date & Time</th>
+                                    <th class="py-3 px-4">Category</th>
+                                    <th class="py-3 px-4">Issue Details</th>
+                                    <th class="py-3 px-4 text-center">Status</th>
+                                    <!-- Aluth Photos Column -->
+                                    <th class="py-3 px-4 text-center">Photos</th> 
+                                </tr>
+                            </thead>
+                            <tbody id="breakdownTableBody" class="text-sm">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- TAB 3: Services -->
+                    <div id="content-service" class="tab-content hidden">
+                        <table class="w-full text-left border-collapse border border-gray-200 mt-2">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b">
+                                    <th class="py-3 px-4">Completed Date (Actual)</th>
+                                    <th class="py-3 px-4">Service Type</th>
+                                    <th class="py-3 px-4">Attended Technicians</th>
+                                    <th class="py-3 px-4">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="serviceTableBody" class="text-sm">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📸 Photo Viewer Modal -->
+    <div id="photoModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-[450px]">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-camera-retro text-blue-500 mr-2"></i> Breakdown Photos</h3>
+                <button onclick="closePhotoModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="grid grid-cols-2 gap-3" id="modalPhotoContainer">
+                <div class="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 1</div>
+                <div class="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 2</div>
+            </div>
+            <p class="text-xs text-center text-gray-400 mt-4 font-semibold">Photos uploaded via ElevateCare Mobile App.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const liftData = {
+            "BD_01": {
+                "PL": ["PL 1.01", "PL 1.02", "PL 1.03", "PL 1.04", "PL 1.05", "PL 1.06", "PL 1.07", "PL 1.08"],
+                "SL": ["SL 1.01", "SL 1.02"],
+                "ES": ["ES 1.03a", "ES 1.03b", "ES 1.04a", "ES 1.04b"]
+            },
+            "BD_02": {
+                "PL": ["PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36"],
+                "SL": ["SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09"],
+                "FSL": ["FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08"],
+                "ES": ["ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"]
+            },
+            "BD_03": {
+                "PL": ["PL 3.01", "PL 3.02", "PL 3.03", "PL 3.04"],
+                "FSL": ["FSL 3.01", "FSL 3.02", "FSL 3.03", "FSL 3.04", "FSL 3.05", "FSL 3.06"],
+                "ES": ["ES 3.01a", "ES 3.01b", "ES 3.02a", "ES 3.02b", "ES 3.03a", "ES 3.03b"]
+            }
+        };
+
+        const bldgSelect = document.getElementById('buildingSelect');
+        const catSelect = document.getElementById('categorySelect');
+        const unitSelect = document.getElementById('unitSelect');
+        const viewBtn = document.getElementById('viewDataBtn');
+
+        bldgSelect.addEventListener('change', function() {
+            catSelect.innerHTML = '<option value="">-- Choose Category --</option>';
+            unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+            catSelect.disabled = true;
+            unitSelect.disabled = true;
+            viewBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            if (this.value) {
+                const categories = Object.keys(liftData[this.value]);
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    if(cat === 'PL') opt.textContent = 'PL';
+                    if(cat === 'SL') opt.textContent = 'SL';
+                    if(cat === 'FSL') opt.textContent = 'FSL';
+                    if(cat === 'ES') opt.textContent = 'ES';
+                    catSelect.appendChild(opt);
+                });
+                catSelect.disabled = false;
+            }
+        });
+
+        catSelect.addEventListener('change', function() {
+            unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+            unitSelect.disabled = true;
+            viewBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const bldg = bldgSelect.value;
+            const cat = this.value;
+
+            if (bldg && cat && liftData[bldg][cat]) {
+                liftData[bldg][cat].forEach(unit => {
+                    const opt = document.createElement('option');
+                    opt.value = unit;
+                    opt.textContent = unit;
+                    unitSelect.appendChild(opt);
+                });
+                unitSelect.disabled = false;
+            }
+        });
+
+        unitSelect.addEventListener('change', function() {
+            if (this.value) viewBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            else viewBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+
+        viewBtn.addEventListener('click', function() {
+            if(unitSelect.value) {
+                document.getElementById('detailsContainer').classList.remove('hidden');
+                document.getElementById('detailsContainer').classList.add('flex-1');
+                
+                document.getElementById('displayUnitNo').textContent = unitSelect.value;
+                document.getElementById('displayBuilding').textContent = bldgSelect.options[bldgSelect.selectedIndex].text;
+                document.getElementById('displayCategoryTag').textContent = catSelect.options[catSelect.selectedIndex].text;
+
+                if(catSelect.value === 'ES') document.getElementById('uAngleSection').classList.add('hidden');
+                else document.getElementById('uAngleSection').classList.remove('hidden');
+                
+                loadBreakdownHistory(unitSelect.value);
+                loadServiceHistory(unitSelect.value);
+                loadUnitSpecs(unitSelect.value);
+            }
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                el.classList.add('text-gray-500');
+            });
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            document.getElementById('content-' + tabName).classList.add('block');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500');
+            document.getElementById('tab-' + tabName).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+        }
+
+        // Modal Functions
+        function openPhotoModal() {
+            document.getElementById('photoModal').classList.remove('hidden');
+        }
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.add('hidden');
+        }
+
+        // --- Load Breakdowns ---
+        async function loadBreakdownHistory(unitNo) {
+            const tableBody = document.getElementById('breakdownTableBody');
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
+            try {
+                const response = await fetch(`http://localhost:5000/api/breakdowns/${encodeURIComponent(unitNo)}`);
+                const data = await response.json();
+                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500 font-bold">No breakdowns recorded.</td></tr>'; return; }
+
+                let rows = '';
+                data.forEach(row => {
+                    let catColor = 'bg-gray-100 text-gray-700';
+                    if(row.category.includes('Door')) catColor = 'bg-red-100 text-red-700';
+                    else if(row.category.includes('Minor')) catColor = 'bg-yellow-100 text-yellow-700';
+                    else catColor = 'bg-blue-100 text-blue-700';
+
+                    const formattedDate = new Date(row.informed_date).toISOString().split('T')[0];
+                    rows += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-bold text-gray-700">${formattedDate} <br><span class="text-xs font-normal text-gray-500">${row.informed_time}</span></td>
+                            <td class="py-3 px-4"><span class="${catColor} px-2 py-1 rounded text-[10px] font-bold uppercase">${row.category}</span></td>
+                            <td class="py-3 px-4">
+                                <span class="block font-semibold text-gray-800">${row.nature_of_breakdown}</span>
+                                <span class="block text-xs text-green-600 mt-1"><i class="fa-solid fa-wrench"></i> ${row.actions_taken || 'Pending'}</span>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                ${row.job_status === 'Job Done' ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Done</span>' : '<span class="text-red-500 font-bold text-xs"><i class="fa-solid fa-clock"></i> Pending</span>'}
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="openPhotoModal()" class="text-blue-500 hover:text-blue-700 hover:underline text-xs font-bold transition"><i class="fa-solid fa-image"></i> View (2)</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tableBody.innerHTML = rows;
+            } catch (error) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500 font-bold">Error loading data.</td></tr>'; }
+        }
+
+        // --- Load Services ---
+        async function loadServiceHistory(unitNo) {
+            const tableBody = document.getElementById('serviceTableBody');
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
+            try {
+                const response = await fetch(`http://localhost:5000/api/services/${encodeURIComponent(unitNo)}`);
+                const data = await response.json();
+                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500 font-bold">No completed services recorded.</td></tr>'; return; }
+
+                let rows = '';
+                data.forEach(row => {
+                    const formattedDate = new Date(row.service_date).toISOString().split('T')[0];
+                    rows += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-bold text-green-700">${formattedDate}</td>
+                            <td class="py-3 px-4 font-semibold text-gray-800">${row.service_type}</td>
+                            <td class="py-3 px-4 font-semibold text-gray-600">${row.technicians}</td>
+                            <td class="py-3 px-4 text-xs text-gray-500">${row.notes || '-'}</td>
+                        </tr>
+                    `;
+                });
+                tableBody.innerHTML = rows;
+            } catch (error) { tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500 font-bold">Error loading data.</td></tr>'; }
+        }
+
+        // --- Load & Save Unit Specs ---
+        async function loadUnitSpecs(unitNo) {
+            document.getElementById('specsForm').reset();
+            try {
+                const response = await fetch(`http://localhost:5000/api/unit-specs/${encodeURIComponent(unitNo)}`);
+                const data = await response.json();
+                
+                if(data.motor_details) {
+                    document.getElementById('spec_motor').value = data.motor_details;
+                    document.getElementById('spec_controller').value = data.controller_type;
+                    document.getElementById('spec_eld').value = data.eld_type;
+                    document.getElementById('spec_battery').value = data.eld_battery;
+                    document.getElementById('spec_sin').value = data.u_angle_sin;
+                    document.getElementById('spec_cos').value = data.u_angle_cos;
+                }
+            } catch (error) { console.error("Specs load error", error); }
+        }
+
+        document.getElementById('specsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveSpecsBtn');
+            const msg = document.getElementById('specMessage');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const payload = {
+                unit_no: document.getElementById('displayUnitNo').textContent,
+                motor_details: document.getElementById('spec_motor').value,
+                controller_type: document.getElementById('spec_controller').value,
+                eld_type: document.getElementById('spec_eld').value,
+                eld_battery: document.getElementById('spec_battery').value,
+                u_angle_sin: document.getElementById('spec_sin').value,
+                u_angle_cos: document.getElementById('spec_cos').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/unit-specs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    msg.className = "text-sm font-bold text-green-600";
+                    msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Saved!';
+                } else {
+                    msg.className = "text-sm font-bold text-red-600";
+                    msg.innerHTML = "Error saving!";
+                }
+            } catch (error) {
+                msg.className = "text-sm font-bold text-red-600";
+                msg.innerHTML = "Network Error!";
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-save mr-2"></i> Update Specifications';
+                btn.disabled = false;
+                setTimeout(() => msg.innerHTML = '', 3000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technicians - ElevateCare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans flex h-screen overflow-hidden">
+
+    <div class="w-64 bg-gray-900 text-white flex flex-col p-5 shadow-lg z-10">
+        <h2 class="text-2xl font-bold mb-8 text-blue-400"><i class="fa-solid fa-elevator"></i> ElevateCare</h2>
+        <ul class="space-y-2">
+            <a href="dashboard.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-chart-line w-6"></i> Dashboard</li></a>
+            <a href="lifts.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-building w-6"></i> Lifts / Escalators</li></a>
+            <a href="breakdowns.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-triangle-exclamation w-6"></i> Breakdowns</li></a>
+            <a href="services.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-screwdriver-wrench w-6"></i> Services</li></a>
+            <a href="parts.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer mb-2 transition"><i class="fa-solid fa-gear w-6"></i> Spare Parts</li></a>
+            
+            <a href="technicians.html" class="block"><li class="bg-blue-600 p-3 rounded-lg cursor-pointer font-semibold mb-2 shadow"><i class="fa-solid fa-users w-6"></i> Technicians</li></a>
+            
+            <a href="reports.html" class="block"><li class="hover:bg-gray-800 text-gray-300 p-3 rounded-lg cursor-pointer transition"><i class="fa-solid fa-chart-pie w-6"></i> Analytics & Reports</li></a>
+        </ul>
+    </div>
+
+    <div class="flex-1 p-8 overflow-y-auto">
+        
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Technicians & Staff</h1>
+                <p class="text-gray-500">Manage field technicians and assign tasks.</p>
+            </div>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow flex items-center gap-2 transition">
+                <i class="fa-solid fa-user-plus"></i> Add Technician
+            </button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex gap-4 items-center border border-gray-100">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400"></i>
+                <input type="text" placeholder="Search by name, ID or skills..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <select class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Status: All</option>
+                <option value="Available">🟢 Available</option>
+                <option value="OnJob">🟡 On Job</option>
+                <option value="Leave">🔴 On Leave</option>
+            </select>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
+                        <th class="py-4 px-6 font-bold">Technician Profile</th>
+                        <th class="py-4 px-6 font-bold">Skills</th>
+                        <th class="py-4 px-6 font-bold text-center">Status</th>
+                        <th class="py-4 px-6 font-bold">Current Assignment</th>
+                        <th class="py-4 px-6 font-bold text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
+                    
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-4 px-6 flex items-center gap-4">
+                            <img src="https://ui-avatars.com/api/?name=Rifki+D&background=0D8ABC&color=fff" class="w-10 h-10 rounded-full shadow-sm">
+                            <div>
+                                <span class="font-bold text-gray-900 block">Rifki / Dias Team</span>
+                                <span class="text-xs text-gray-500">ID: TECH-012</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-gray-600">Electrical, Door Systems</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Available</span>
+                        </td>
+                        <td class="py-4 px-6 text-gray-400 italic">None</td>
+                        <td class="py-4 px-6 text-center">
+                            <button class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-4 px-6 flex items-center gap-4">
+                            <img src="https://ui-avatars.com/api/?name=Tharusha+P&background=F59E0B&color=fff" class="w-10 h-10 rounded-full shadow-sm">
+                            <div>
+                                <span class="font-bold text-gray-900 block">Tharusha / Pathum</span>
+                                <span class="text-xs text-gray-500">ID: TECH-018</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-gray-600">Mechanical, Escalators</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-wrench mr-1"></i> On Job</span>
+                        </td>
+                        <td class="py-4 px-6 text-gray-800 font-semibold">ES 2.07a <span class="block text-xs font-normal text-gray-500">Minor Breakdown</span></td>
+                        <td class="py-4 px-6 text-center">
+                            <button class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50 opacity-70">
+                        <td class="py-4 px-6 flex items-center gap-4">
+                            <img src="https://ui-avatars.com/api/?name=Tharindu+A&background=EF4444&color=fff" class="w-10 h-10 rounded-full shadow-sm grayscale">
+                            <div>
+                                <span class="font-bold text-gray-900 block">Tharindu / Ashen</span>
+                                <span class="text-xs text-gray-500">ID: TECH-005</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-6 text-gray-600">Heavy Machinery, Cabins</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">On Leave</span>
+                        </td>
+                        <td class="py-4 px-6 text-gray-400 italic">None</td>
+                        <td class="py-4 px-6 text-center">
+                            <button class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
