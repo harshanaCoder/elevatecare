@@ -1,0 +1,64 @@
+services:
+  app:
+    build: .
+    container_name: elevatecare_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Inside Docker, the DB isn't "localhost" — it's the other service,
+      # reachable by its service name on the compose network. This overrides
+      # whatever DB_HOST is set to in .env (keep .env's DB_HOST=localhost for
+      # when you run `npm run dev` outside Docker).
+      - DB_HOST=db
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "5000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/healthz', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: mysql:8.4
+    container_name: elevatecare_db
+    restart: unless-stopped
+    environment:
+      # Fails loudly with a clear message if DB_PASSWORD is blank in .env —
+      # on purpose. An empty DB password is fine for local dev, never for
+      # anything Docker will eventually run on a public server.
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?Set a non-empty DB_PASSWORD in .env before running Docker}
+      MYSQL_DATABASE: ${DB_NAME:-elevatecare_db}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    expose:
+      - "3306"
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: elevatecare_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:

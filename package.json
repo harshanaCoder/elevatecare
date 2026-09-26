@@ -2,8 +2,14 @@
   "name": "elevator-system-ui",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
+    "prestart": "npm run build:css",
+    "start": "node src/server.js",
+    "predev": "npm run build:css",
+    "dev": "nodemon src/server.js",
+    "build:css": "tailwindcss -i ./src/styles/tailwind-input.css -o ./public/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./src/styles/tailwind-input.css -o ./public/css/tailwind.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,8 +17,15 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-session": "^2.1.1",
     "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "mysql2": "^3.22.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "tailwindcss": "^3.4.19"
   }
 }

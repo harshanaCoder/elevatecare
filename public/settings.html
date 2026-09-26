@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - ElevateCare</title>
+    <script>
+        // Applied before Tailwind paints anything, so there's no flash of the
+        // wrong theme on load. The full toggle logic lives in js/theme.js —
+        // this inline copy only needs to run once, synchronously, this early.
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) document.documentElement.classList.add('dark');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-root"></div>
+    <script src="js/config.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/footer.js"></script>
+
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
+
+        <div class="mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Settings</h1>
+            <p class="text-gray-500 dark:text-gray-400">Personal preferences for this browser.</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 max-w-xl">
+            <h2 class="text-md font-bold text-gray-800 dark:text-gray-100 mb-1"><i class="fa-solid fa-circle-half-stroke text-blue-500 mr-2"></i>Appearance</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">Switch between light and dark mode. This is saved on this device only.</p>
+
+            <div class="flex items-center justify-between gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-3">
+                    <div id="themeIcon" class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 text-lg">
+                        <i class="fa-solid fa-sun"></i>
+                    </div>
+                    <div>
+                        <p id="themeLabel" class="font-bold text-gray-800 dark:text-gray-100">Light Mode</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Click the switch to toggle appearance</p>
+                    </div>
+                </div>
+
+                <button id="themeToggle" type="button" role="switch" aria-label="Toggle dark mode"
+                    class="relative inline-flex h-8 w-14 items-center rounded-full transition-colors bg-gray-300 dark:bg-blue-600 shrink-0">
+                    <span id="themeToggleKnob" class="inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform translate-x-1 dark:translate-x-7"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshThemeUI() {
+            const isDark = ElevateTheme.getTheme() === 'dark';
+            document.getElementById('themeLabel').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+            document.getElementById('themeIcon').innerHTML = isDark
+                ? '<i class="fa-solid fa-moon"></i>'
+                : '<i class="fa-solid fa-sun"></i>';
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', function () {
+            ElevateTheme.toggleTheme();
+            refreshThemeUI();
+        });
+
+        // theme.js's initial classList toggle already ran via the inline
+        // script above; this just syncs the label/icon to match on load.
+        refreshThemeUI();
+    </script>
+</body>
+</html>

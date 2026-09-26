@@ -1,0 +1,12 @@
+# Local / no-domain-yet default: plain HTTP on port 80.
+:80 {
+    reverse_proxy app:5000
+}
+
+# Once you have a real domain pointed at your VM's public IP, replace the
+# block above with this — Caddy will then automatically get and renew a
+# free HTTPS certificate for you, no Certbot, no manual renewal:
+#
+# yourdomain.com {
+#     reverse_proxy app:5000
+# }

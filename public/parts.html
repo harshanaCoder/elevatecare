@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spare Parts - ElevateCare</title>
+    <script>
+        // Applied before Tailwind paints anything, so there's no flash of the
+        // wrong theme on load. Toggle logic itself lives in js/theme.js.
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) document.documentElement.classList.add('dark');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-root"></div>
+    <script src="js/config.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/footer.js"></script>
+
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
+
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Spare Parts Inventory</h1>
+                <p class="text-gray-500 dark:text-gray-400">Manage elevator components and monitor stock levels.</p>
+            </div>
+            <button class="bg-gray-800 hover:bg-black text-white font-semibold px-5 py-2.5 rounded-lg shadow flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-plus"></i> Add New Part
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <h3 class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1">Total Unique Parts</h3>
+                <p class="text-3xl font-bold text-gray-800 dark:text-gray-100">145</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-red-500 bg-red-50">
+                <h3 class="text-red-500 text-xs font-bold uppercase mb-1">Low Stock Alerts</h3>
+                <p class="text-3xl font-bold text-red-600">5 <span class="text-sm font-normal text-gray-500 dark:text-gray-400">items</span></p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border-l-4 border-green-500">
+                <h3 class="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1">Stock Value</h3>
+                <p class="text-3xl font-bold text-gray-800 dark:text-gray-100">Rs. 450,000</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm mb-6 flex flex-col sm:flex-row gap-4 sm:items-center border border-gray-100 dark:border-gray-700">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 dark:text-gray-500"></i>
+                <input type="text" placeholder="Search part name, ID or category..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <select class="border rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Category: All</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Sensors">Sensors</option>
+            </select>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[640px]">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-900/40 text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                        <th class="py-4 px-6 font-bold">Part Details</th>
+                        <th class="py-4 px-6 font-bold">Category</th>
+                        <th class="py-4 px-6 font-bold text-center">Stock Level</th>
+                        <th class="py-4 px-6 font-bold">Unit Price</th>
+                        <th class="py-4 px-6 font-bold text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-sm text-gray-700 dark:text-gray-300">
+                    
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-4 px-6">
+                            <span class="font-bold text-gray-900 dark:text-gray-100 block">Heavy Duty Suspension Cable (10m)</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Part ID: #CAB-0092</span>
+                        </td>
+                        <td class="py-4 px-6 text-gray-600 dark:text-gray-400">Mechanical</td>
+                        <td class="py-4 px-6 text-center font-bold text-gray-800 dark:text-gray-100">24</td>
+                        <td class="py-4 px-6 text-gray-600 dark:text-gray-400">Rs. 15,000</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">In Stock</span>
+                        </td>
+                    </tr>
+
+                    <tr class="hover:bg-red-50 bg-red-50/20">
+                        <td class="py-4 px-6">
+                            <span class="font-bold text-gray-900 dark:text-gray-100 block">Car Door Micro Switch</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Part ID: #SEN-0104</span>
+                        </td>
+                        <td class="py-4 px-6 text-gray-600 dark:text-gray-400">Sensors</td>
+                        <td class="py-4 px-6 text-center font-bold text-red-600">2</td>
+                        <td class="py-4 px-6 text-gray-600 dark:text-gray-400">Rs. 4,500</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold animate-pulse">Low Stock</span>
+                        </td>
+                    </tr>
+
+                    <tr class="hover:bg-gray-50 opacity-70">
+                        <td class="py-4 px-6">
+                            <span class="font-bold text-gray-900 dark:text-gray-100 block">Main Control Board V2</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Part ID: #ELC-0055</span>
+                        </td>
+                        <td class="py-4 px-6 text-gray-600 dark:text-gray-400">Electrical</td>
+                        <td class="py-4 px-6 text-center font-bold text-gray-500 dark:text-gray-400">0</td>
+                        <td class="py-4 px-6 text-gray-600 dark:text-gray-400">Rs. 85,000</td>
+                        <td class="py-4 px-6 text-center">
+                            <span class="bg-gray-200 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full text-xs font-bold">Out of Stock</span>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -3,3 +3,10 @@ node_modules/
 *.log
 npm-debug.log*
 .vscode/
+.claude/
+backups/
+passwords.txt
+
+# Compiled by `npm run build:css` (also runs automatically via prestart/predev
+# and inside the Docker build) — not meant to be hand-edited or committed.
+public/css/tailwind.css

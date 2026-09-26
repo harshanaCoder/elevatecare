@@ -1,0 +1,26 @@
+/* Dark-mode catch-all for form fields.
+   Most inputs/selects/textareas across the app rely on the browser's default
+   white background (no explicit bg-*/text-* utility classes), so annotating
+   every single one with dark: utility classes would mean touching dozens of
+   elements per page. This one small stylesheet covers all of them at once —
+   loaded on every page alongside Tailwind, never conflicts with it since
+   Tailwind's own dark: utilities take precedence wherever they ARE set
+   explicitly (those are more specific / declared later in the cascade). */
+html.dark input,
+html.dark select,
+html.dark textarea {
+    background-color: #111827; /* gray-900 */
+    border-color: #4b5563;     /* gray-600 */
+    color: #f3f4f6;            /* gray-100 */
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #6b7280; /* gray-500 */
+}
+
+html.dark input:disabled,
+html.dark select:disabled {
+    background-color: #1f2937; /* gray-800 */
+    color: #6b7280;
+}

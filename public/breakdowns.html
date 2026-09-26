@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakdowns - ElevateCare</title>
+    <script>
+        // Applied before Tailwind paints anything, so there's no flash of the
+        // wrong theme on load. Toggle logic itself lives in js/theme.js.
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) document.documentElement.classList.add('dark');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-root"></div>
+    <script src="js/config.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/footer.js"></script>
+
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Breakdowns</h1>
+                <p class="text-gray-500 dark:text-gray-400">Log new breakdowns and review breakdown history.</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+
+            <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-4 sm:px-6 pt-4 gap-4 sm:gap-6 overflow-x-auto">
+                <button onclick="switchTab('new-entry')" id="tab-new-entry" class="tab-btn pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">
+                    <i class="fa-solid fa-plus mr-1"></i> New Breakdown Entry
+                </button>
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-800 whitespace-nowrap">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> History & Recommended Actions
+                </button>
+            </div>
+
+            <div class="p-6">
+
+            <div id="content-new-entry" class="tab-content block">
+            <form id="breakdownForm" class="space-y-6">
+                
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 border-b pb-2 mb-4"><i class="fa-solid fa-phone-volume text-blue-500 mr-2"></i>Informed Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Date *</label>
+                            <input type="date" id="informed_date" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Time *</label>
+                            <input type="time" id="informed_time" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed By (Name) *</label>
+                            <input type="text" id="informed_by" required placeholder="e.g. Mr. Sunil (Sec)" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 border-b pb-2 mb-4"><i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Issue Details</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-gray-50 dark:bg-gray-900/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">1. Select Building *</label>
+                            <select id="bldg_select" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Choose Building --</option>
+                                <option value="BD_01">BD_01</option>
+                                <option value="BD_02">BD_02</option>
+                                <option value="BD_03">BD_03</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">2. Select Lift Type *</label>
+                            <select id="type_select" required disabled class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Choose Type --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">3. Select Unit No *</label>
+                            <select id="unit_no" required disabled class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 font-bold text-blue-700">
+                                <option value="">-- Choose Unit --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Breakdown Category *</label>
+                            <select id="category" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700 dark:text-gray-300">
+                                <option value="">-- Select Fault Type --</option>
+                                <option>Door System Failure</option>
+                                <option>Minor Breakdown</option>
+                                <option>Electrical / Control Failure</option>
+                                <option>Mechanical Failure</option>
+                                <option>Power Failure</option>
+                                <option>Communication Failure</option>
+                                <option>Safety Error</option>
+                                <option>Major Breakdown</option>
+                                <option>Passenger Entrapment</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nature of Breakdown *</label>
+                            <textarea id="nature_of_breakdown" required rows="1" placeholder="Briefly describe the issue..." class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 cursor-pointer">
+                        <input type="checkbox" id="action_taken_toggle" class="w-4 h-4 text-blue-600 rounded">
+                        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">Action already taken for this breakdown?</span>
+                    </label>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Leave unticked to log it as <span class="font-semibold text-yellow-600">Pending</span>. Tick it to fill in attendance details and mark it <span class="font-semibold text-green-600">Job Done</span>.</p>
+                </div>
+
+                <div id="actionAttendanceSection" class="hidden">
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 border-b pb-2 mb-4"><i class="fa-solid fa-screwdriver-wrench text-green-500 mr-2"></i>Action & Attendance</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Date</label>
+                            <input type="date" id="attended_date" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Time</label>
+                            <input type="time" id="attended_time" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                       <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended By (Select Technicians) *</label>
+                            <div class="w-full border rounded p-2 text-sm bg-white dark:bg-gray-800 h-24 overflow-y-auto border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Rifki" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Rifki</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dias" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Dias</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharusha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharusha</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Pathum" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Pathum</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Kamal" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Kamal</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharuka" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharuka</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sadeepa" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Sadeepa</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Adhikari" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Adhikari</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Minhaj" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Minhaj</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Shehan" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Shehan</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Amos" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Amos</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Ashen" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Ashen</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharindu" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharindu</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Wijerathne" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Wijerathne</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sampath" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Sampath</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Somasiri" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Somasiri</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dc" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">DC</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Botheju" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Botheju</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Deshan" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Deshan</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sachintha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Sachintha</span></label>
+                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Janith" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Janith</span></label>
+                            </div>
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Actions Taken</label>
+                            <input type="text" id="actions_taken" placeholder="What was fixed?" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="statusMessage" class="hidden p-3 rounded text-sm font-bold text-center"></div>
+
+                <div class="flex justify-end pt-4 border-t">
+                    <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Save
+                    </button>
+                </div>
+            </form>
+            </div>
+
+            <div id="content-history" class="tab-content hidden">
+                <div class="relative mb-3">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 dark:text-gray-500"></i>
+                    <input type="text" id="historySearchInput" placeholder="Search by unit, category or description..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+                <div class="flex flex-wrap gap-3 mb-4 items-center">
+                    <select id="historyCategoryFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Category: All</option>
+                        <option>Door System Failure</option>
+                        <option>Minor Breakdown</option>
+                        <option>Electrical / Control Failure</option>
+                        <option>Mechanical Failure</option>
+                        <option>Power Failure</option>
+                        <option>Communication Failure</option>
+                        <option>Safety Error</option>
+                        <option>Major Breakdown</option>
+                        <option>Passenger Entrapment</option>
+                    </select>
+                    <select id="historyStatusFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Status: All</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Job Done">Job Done</option>
+                    </select>
+                    <div class="flex items-center gap-2">
+                        <label for="historyFromDate" class="text-xs font-bold text-gray-500 dark:text-gray-400">From</label>
+                        <input type="date" id="historyFromDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="historyToDate" class="text-xs font-bold text-gray-500 dark:text-gray-400">To</label>
+                        <input type="date" id="historyToDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="button" onclick="clearHistoryDateFilter()" class="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-500 transition px-2 py-2">
+                        <i class="fa-solid fa-xmark mr-1"></i>Clear dates
+                    </button>
+                </div>
+
+                <p class="text-xs text-gray-400 dark:text-gray-500 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>Click a row to see full details.</p>
+
+                <div class="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                                <th class="py-3 px-4">Date</th>
+                                <th class="py-3 px-4">Unit No</th>
+                                <th class="py-3 px-4">Category</th>
+                                <th class="py-3 px-4 text-center">Status</th>
+                                <th class="py-3 px-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-gray-100 dark:divide-gray-700 text-sm text-gray-700 dark:text-gray-300">
+                            <tr><td colspan="5" class="text-center py-8 text-gray-400 dark:text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown Detail Modal (read-only) -->
+    <div id="viewModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i>Breakdown Details</h2>
+                <button onclick="closeViewModal()" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="viewModalBody" class="space-y-4 text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Edit Breakdown Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Edit Breakdown</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="editBreakdownForm" class="space-y-4">
+                <input type="hidden" id="edit_id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Date</label>
+                        <input type="date" id="edit_informed_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Time</label>
+                        <input type="time" id="edit_informed_time" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed By</label>
+                        <input type="text" id="edit_informed_by" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Unit No *</label>
+                        <input type="text" id="edit_unit_no" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Category *</label>
+                        <select id="edit_category" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select Fault Type --</option>
+                            <option>Door System Failure</option>
+                            <option>Minor Breakdown</option>
+                            <option>Electrical / Control Failure</option>
+                            <option>Mechanical Failure</option>
+                            <option>Power Failure</option>
+                            <option>Communication Failure</option>
+                            <option>Safety Error</option>
+                            <option>Major Breakdown</option>
+                            <option>Passenger Entrapment</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Job Status</label>
+                        <select id="edit_job_status" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Pending">Pending (Not Fixed)</option>
+                            <option value="Job Done">Job Done (Fixed)</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nature of Breakdown *</label>
+                        <textarea id="edit_nature_of_breakdown" required rows="2" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Date</label>
+                        <input type="date" id="edit_attended_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Time</label>
+                        <input type="time" id="edit_attended_time" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended By</label>
+                        <input type="text" id="edit_attended_by" placeholder="e.g. Rifki / Dias" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Actions Taken</label>
+                        <input type="text" id="edit_actions_taken" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" id="editSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition">
+                        <i class="fa-solid fa-check mr-1"></i> Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm / Alert Dialog -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
+            <div id="confirmIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl"></div>
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1"></h3>
+            <p id="confirmMessage" class="text-sm text-gray-500 dark:text-gray-400 mb-6"></p>
+            <div class="flex justify-center gap-3">
+                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 transition">Cancel</button>
+                <button id="confirmOkBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications: bottom of screen, color-coded, auto-dismiss -->
+    <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none w-full px-4"></div>
+
+    <script>
+        // 0. TABS
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                el.classList.add('text-gray-500 dark:text-gray-400');
+            });
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            document.getElementById('content-' + tabName).classList.add('block');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500 dark:text-gray-400');
+            document.getElementById('tab-' + tabName).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+
+            if (tabName === 'history') loadHistory();
+        }
+
+        // 0b. HISTORY & RECOMMENDED ACTIONS
+        // Recommendations are static, category-based guidance (this app has no
+        // diagnostic/ML backend) — a starting checklist for the technician, not
+        // a substitute for their own inspection.
+        const RECOMMENDED_ACTIONS = {
+            'Door System Failure': 'Inspect door sensors and tracks, clean/lubricate rollers, test the door reversal safety edge.',
+            'Minor Breakdown': 'Perform a routine reset and monitor; log for the next scheduled service.',
+            'Electrical / Control Failure': 'Check control panel wiring and fuses; inspect controller/PLC logs for fault codes.',
+            'Mechanical Failure': 'Inspect drive sheave, ropes/belts and brake assembly for wear, noise or vibration.',
+            'Power Failure': 'Verify incoming power supply and ARD (Automatic Rescue Device) battery; check the main breaker.',
+            'Communication Failure': 'Test the intercom/GSM module and check signal wiring between car and machine room.',
+            'Safety Error': 'Test all safety circuits (limit switches, safety gear, governor) before returning to service.',
+            'Major Breakdown': 'Escalate to a senior technician; full inspection required before resuming service.',
+            'Passenger Entrapment': 'Immediate priority — confirm passenger safety, inspect the door lock circuit and safety chain, file an incident report.'
+        };
+        const DEFAULT_RECOMMENDATION = 'Perform a general inspection and consult the unit\'s maintenance log.';
+
+        const CATEGORY_BADGE = {
+            'Door System Failure': 'bg-red-100 text-red-700',
+            'Minor Breakdown': 'bg-yellow-100 text-yellow-700',
+            'Electrical / Control Failure': 'bg-blue-100 text-blue-700',
+            'Mechanical Failure': 'bg-orange-100 text-orange-700',
+            'Power Failure': 'bg-purple-100 text-purple-700',
+            'Communication Failure': 'bg-teal-100 text-teal-700',
+            'Safety Error': 'bg-pink-100 text-pink-700',
+            'Major Breakdown': 'bg-gray-200 text-gray-700 dark:text-gray-300',
+            'Passenger Entrapment': 'bg-gray-900 text-white'
+        };
+        const DEFAULT_CATEGORY_BADGE = 'bg-blue-50 text-blue-600';
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // Consistent fallback wording — every add/update/delete error path uses
+        // this same message unless the server gave a more specific one.
+        const GENERIC_ERROR = 'Something went wrong. Please try again.';
+
+        // Success/error feedback: bottom-of-screen toast, colored by type,
+        // auto-dismisses after 3s.
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const styles = { success: 'bg-green-600', error: 'bg-red-600' };
+            const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check';
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto ${styles[type] || styles.success} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-2 opacity-0 transition-opacity duration-300 max-w-md`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Promise-based replacement for window.confirm() — resolves true/false,
+        // matches the app's own modal styling instead of the browser's dialog.
+        function showConfirm({ title, message, okText = 'Confirm', okColor = 'bg-blue-600 hover:bg-blue-700', icon = 'fa-solid fa-circle-question', iconColor = 'bg-blue-100 text-blue-600' }) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('confirmModal');
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                document.getElementById('confirmTitle').textContent = title;
+                document.getElementById('confirmMessage').textContent = message;
+
+                const iconEl = document.getElementById('confirmIcon');
+                iconEl.className = `w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl ${iconColor}`;
+                iconEl.innerHTML = `<i class="${icon}"></i>`;
+
+                okBtn.textContent = okText;
+                okBtn.className = `px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition ${okColor}`;
+
+                modal.classList.remove('hidden');
+
+                function cleanup(result) {
+                    modal.classList.add('hidden');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        let allBreakdowns = [];
+
+        async function loadHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            try {
+                const response = await fetch(`${API_BASE}/all-breakdowns`);
+                allBreakdowns = await response.json();
+                renderHistory();
+            } catch (error) {
+                console.error("Error fetching breakdown history:", error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-400 font-bold">Failed to load breakdown history.</td></tr>';
+            }
+        }
+
+        function clearHistoryDateFilter() {
+            document.getElementById('historyFromDate').value = '';
+            document.getElementById('historyToDate').value = '';
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            const term = document.getElementById('historySearchInput').value.trim().toLowerCase();
+            const categoryValue = document.getElementById('historyCategoryFilter').value;
+            const statusValue = document.getElementById('historyStatusFilter').value;
+            const fromDate = document.getElementById('historyFromDate').value;
+            const toDate = document.getElementById('historyToDate').value;
+
+            const filtered = allBreakdowns.filter(row => {
+                const matchesTerm = !term ||
+                    (row.unit_no || '').toLowerCase().includes(term) ||
+                    (row.category || '').toLowerCase().includes(term) ||
+                    (row.nature_of_breakdown || '').toLowerCase().includes(term) ||
+                    (row.informed_by || '').toLowerCase().includes(term) ||
+                    (row.attended_by || '').toLowerCase().includes(term);
+                const matchesCategory = !categoryValue || row.category === categoryValue;
+                const matchesStatus = !statusValue || row.job_status === statusValue;
+                // informed_date comes back from MySQL as a full ISO datetime
+                // string — only the date part is compared, against the plain
+                // YYYY-MM-DD values <input type="date"> gives us (lexicographic
+                // comparison is safe for that format).
+                const rowDate = (row.informed_date || '').split('T')[0];
+                const matchesDate = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
+                return matchesTerm && matchesCategory && matchesStatus && matchesDate;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No breakdowns match your search.</td></tr>';
+                return;
+            }
+
+            // Only the essentials show in the row — everything else (nature of
+            // breakdown, attendance, actions taken, recommendation) is in the
+            // detail modal, opened by clicking the row.
+            tbody.innerHTML = filtered.map(row => {
+                const dateObj = new Date(row.informed_date);
+                const formattedDate = isNaN(dateObj) ? row.informed_date : dateObj.toISOString().split('T')[0];
+                const categoryClass = CATEGORY_BADGE[row.category] || DEFAULT_CATEGORY_BADGE;
+                const isDone = row.job_status === 'Job Done';
+                const statusBadge = isDone
+                    ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Done</span>'
+                    : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-clock mr-1"></i> Pending</span>';
+
+                return `
+                    <tr class="hover:bg-gray-50 border-b cursor-pointer" onclick="viewBreakdown(${row.id})">
+                        <td class="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">${escapeHtml(formattedDate)}</td>
+                        <td class="py-3 px-4 font-bold text-blue-600">${escapeHtml(row.unit_no)}</td>
+                        <td class="py-3 px-4"><span class="${categoryClass} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span></td>
+                        <td class="py-3 px-4 text-center">${statusBadge}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="event.stopPropagation(); openEditModal(${row.id})" class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="event.stopPropagation(); deleteBreakdown(${row.id})" class="text-red-600 hover:bg-red-50 p-2 rounded-md transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function detailRow(label, value) {
+            return `
+                <div>
+                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">${escapeHtml(label)}</div>
+                    <div class="text-gray-800 dark:text-gray-100 mt-0.5">${value}</div>
+                </div>
+            `;
+        }
+
+        function viewBreakdown(id) {
+            const row = allBreakdowns.find(b => b.id === id);
+            if (!row) return;
+
+            const categoryClass = CATEGORY_BADGE[row.category] || DEFAULT_CATEGORY_BADGE;
+            const isDone = row.job_status === 'Job Done';
+            const statusBadge = isDone
+                ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Job Done</span>'
+                : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-black uppercase"><i class="fa-solid fa-clock mr-1"></i> Pending</span>';
+            const recommendation = RECOMMENDED_ACTIONS[row.category] || DEFAULT_RECOMMENDATION;
+
+            document.getElementById('viewModalBody').innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    ${detailRow('Unit No', `<span class="font-bold text-blue-600">${escapeHtml(row.unit_no)}</span>`)}
+                    ${detailRow('Category', `<span class="${categoryClass} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span>`)}
+                    ${detailRow('Status', statusBadge)}
+                    ${detailRow('Informed By', escapeHtml(row.informed_by || '—'))}
+                    ${detailRow('Informed On', escapeHtml(row.informed_date || '—') + ' ' + escapeHtml(row.informed_time || ''))}
+                    ${detailRow('Attended By', escapeHtml(row.attended_by || 'Not assigned'))}
+                    ${detailRow('Attended On', row.attended_date ? escapeHtml(row.attended_date) + ' ' + escapeHtml(row.attended_time || '') : '—')}
+                </div>
+                ${detailRow('Nature of Breakdown', escapeHtml(row.nature_of_breakdown || '—'))}
+                ${detailRow('Actions Taken', escapeHtml(row.actions_taken || '—'))}
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <div class="text-xs font-bold text-yellow-700 uppercase tracking-wide"><i class="fa-solid fa-lightbulb mr-1"></i> Recommended Actions</div>
+                    <div class="text-gray-700 dark:text-gray-300 mt-1">${escapeHtml(recommendation)}</div>
+                </div>
+            `;
+            document.getElementById('viewModal').classList.remove('hidden');
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.add('hidden');
+        }
+
+        function openEditModal(id) {
+            const row = allBreakdowns.find(b => b.id === id);
+            if (!row) return;
+
+            document.getElementById('edit_id').value = row.id;
+            document.getElementById('edit_informed_date').value = row.informed_date ? row.informed_date.split('T')[0] : '';
+            document.getElementById('edit_informed_time').value = row.informed_time || '';
+            document.getElementById('edit_informed_by').value = row.informed_by || '';
+            document.getElementById('edit_unit_no').value = row.unit_no || '';
+            document.getElementById('edit_category').value = row.category || '';
+            document.getElementById('edit_job_status').value = row.job_status || 'Pending';
+            document.getElementById('edit_nature_of_breakdown').value = row.nature_of_breakdown || '';
+            document.getElementById('edit_attended_date').value = row.attended_date ? row.attended_date.split('T')[0] : '';
+            document.getElementById('edit_attended_time').value = row.attended_time || '';
+            document.getElementById('edit_attended_by').value = row.attended_by || '';
+            document.getElementById('edit_actions_taken').value = row.actions_taken || '';
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        document.getElementById('editBreakdownForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const id = document.getElementById('edit_id').value;
+            const unitNo = document.getElementById('edit_unit_no').value.trim();
+
+            const confirmed = await showConfirm({
+                title: 'Save changes?',
+                message: `Save changes to breakdown "${unitNo}"?`,
+                okText: 'Save',
+                okColor: 'bg-blue-600 hover:bg-blue-700',
+                icon: 'fa-solid fa-pen-to-square',
+                iconColor: 'bg-blue-100 text-blue-600'
+            });
+            if (!confirmed) return;
+
+            const btn = document.getElementById('editSubmitBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const formData = {
+                informed_date: document.getElementById('edit_informed_date').value || null,
+                informed_time: document.getElementById('edit_informed_time').value || null,
+                informed_by: document.getElementById('edit_informed_by').value.trim(),
+                unit_no: unitNo,
+                category: document.getElementById('edit_category').value,
+                job_status: document.getElementById('edit_job_status').value,
+                nature_of_breakdown: document.getElementById('edit_nature_of_breakdown').value.trim(),
+                attended_date: document.getElementById('edit_attended_date').value || null,
+                attended_time: document.getElementById('edit_attended_time').value || null,
+                attended_by: document.getElementById('edit_attended_by').value.trim(),
+                actions_taken: document.getElementById('edit_actions_taken').value.trim()
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/breakdowns/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    closeEditModal();
+                    loadHistory();
+                    showToast('Breakdown updated successfully!', 'success');
+                } else {
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Update';
+                btn.disabled = false;
+            }
+        });
+
+        async function deleteBreakdown(id) {
+            const row = allBreakdowns.find(b => b.id === id);
+            if (!row) return;
+
+            const confirmed = await showConfirm({
+                title: 'Delete breakdown?',
+                message: `Delete the breakdown record for "${row.unit_no}"? This cannot be undone.`,
+                okText: 'Delete',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/breakdowns/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadHistory();
+                    showToast('Breakdown deleted successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        document.getElementById('historySearchInput').addEventListener('input', renderHistory);
+        document.getElementById('historyCategoryFilter').addEventListener('change', renderHistory);
+        document.getElementById('historyStatusFilter').addEventListener('change', renderHistory);
+        document.getElementById('historyFromDate').addEventListener('change', renderHistory);
+        document.getElementById('historyToDate').addEventListener('change', renderHistory);
+
+        // 0c. ACTION-TAKEN TOGGLE — hides the Action & Attendance section until
+        // ticked, and doubles as the job_status the record is saved with:
+        // unticked = Pending, ticked = Job Done. Replaces a separate manual
+        // Job Status dropdown so the two can't disagree with each other.
+        const actionTakenToggle = document.getElementById('action_taken_toggle');
+        const actionAttendanceSection = document.getElementById('actionAttendanceSection');
+        actionTakenToggle.addEventListener('change', function () {
+            actionAttendanceSection.classList.toggle('hidden', !this.checked);
+        });
+
+        // 1. DYNAMIC DROPDOWNS LOGIC
+        const liftData = {
+            "BD_01": {
+                "PL": ["PL 1.01", "PL 1.02", "PL 1.03", "PL 1.04", "PL 1.05", "PL 1.06", "PL 1.07", "PL 1.08"],
+                "SL": ["SL 1.01", "SL 1.02"],
+                "ES": ["ES 1.03a", "ES 1.03b", "ES 1.04a", "ES 1.04b"]
+            },
+            "BD_02": {
+                "PL": ["PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36"],
+                "SL": ["SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09"],
+                "FSL": ["FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08"],
+                "ES": ["ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"]
+            },
+            "BD_03": {
+                "PL": ["PL 3.01", "PL 3.02", "PL 3.03", "PL 3.04"],
+                "FSL": ["FSL 3.01", "FSL 3.02", "FSL 3.03", "FSL 3.04", "FSL 3.05", "FSL 3.06"],
+                "ES": ["ES 3.01a", "ES 3.01b", "ES 3.02a", "ES 3.02b", "ES 3.03a", "ES 3.03b"]
+            }
+        };
+
+        const bldgSelect = document.getElementById('bldg_select');
+        const typeSelect = document.getElementById('type_select');
+        const unitSelect = document.getElementById('unit_no');
+
+        bldgSelect.addEventListener('change', function() {
+            typeSelect.innerHTML = '<option value="">-- Choose Type --</option>';
+            unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+            typeSelect.disabled = true;
+            unitSelect.disabled = true;
+
+            if (this.value) {
+                const categories = Object.keys(liftData[this.value]);
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    if(cat === 'PL') opt.textContent = 'Passenger Lift (PL)';
+                    if(cat === 'SL') opt.textContent = 'Service Lift (SL)';
+                    if(cat === 'FSL') opt.textContent = 'Freight Service Lift (FSL)';
+                    if(cat === 'ES') opt.textContent = 'Escalator (ES)';
+                    typeSelect.appendChild(opt);
+                });
+                typeSelect.disabled = false;
+            }
+        });
+
+        typeSelect.addEventListener('change', function() {
+            unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+            unitSelect.disabled = true;
+
+            const bldg = bldgSelect.value;
+            const cat = this.value;
+
+            if (bldg && cat && liftData[bldg][cat]) {
+                liftData[bldg][cat].forEach(unit => {
+                    const opt = document.createElement('option');
+                    opt.value = unit;
+                    opt.textContent = unit;
+                    unitSelect.appendChild(opt);
+                });
+                unitSelect.disabled = false;
+            }
+        });
+
+        // 2. DATABASE SUBMISSION LOGIC
+        document.getElementById('breakdownForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); 
+            
+            const btn = document.getElementById('submitBtn');
+            const statusDiv = document.getElementById('statusMessage');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const formData = {
+                informed_date: document.getElementById('informed_date').value,
+                informed_time: document.getElementById('informed_time').value,
+                informed_by: document.getElementById('informed_by').value,
+                unit_no: document.getElementById('unit_no').value, // Dan meka select eken ena value eka!
+                category: document.getElementById('category').value,
+                nature_of_breakdown: document.getElementById('nature_of_breakdown').value,
+                attended_date: document.getElementById('attended_date').value || null,
+                attended_time: document.getElementById('attended_time').value || null,
+                attended_by: Array.from(document.querySelectorAll('.tech-checkbox:checked')).map(cb => cb.value).join(' / '),
+                job_status: actionTakenToggle.checked ? 'Job Done' : 'Pending',
+                actions_taken: document.getElementById('actions_taken').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/breakdowns`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-green-100 text-green-700 block mt-4";
+                    statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + result.message;
+                    document.getElementById('breakdownForm').reset();
+                    
+                    // Reset dropdowns explicitly
+                    typeSelect.innerHTML = '<option value="">-- Choose Type --</option>';
+                    unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+                    typeSelect.disabled = true;
+                    unitSelect.disabled = true;
+                    document.querySelectorAll('.tech-checkbox').forEach(cb => cb.checked = false);
+                    actionAttendanceSection.classList.add('hidden');
+                } else {
+                    statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block mt-4";
+                    statusDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Error: ' + result.error;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block mt-4";
+                statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Server error! Is Node.js running?';
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save';
+                btn.disabled = false;
+                setTimeout(() => { statusDiv.classList.add('hidden'); }, 4000);
+            }
+        });
+    </script>
+</body>
+</html>

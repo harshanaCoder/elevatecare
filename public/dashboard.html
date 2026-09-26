@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ElevateCare</title>
+    <script>
+        // Applied before Tailwind paints anything, so there's no flash of the
+        // wrong theme on load. Toggle logic itself lives in js/theme.js.
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) document.documentElement.classList.add('dark');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-root"></div>
+    <script src="js/config.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/footer.js"></script>
+
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
+
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-800 dark:text-gray-100">Welcome back, Admin! 👋</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-1 font-semibold">Real-time control panel for ElevateCare Operations.</p>
+            </div>
+            <div class="sm:text-right">
+                <p id="currentDate" class="text-lg font-bold text-blue-600 dark:text-blue-400">...</p>
+                <p id="currentTime" class="text-sm font-semibold text-gray-500 dark:text-gray-400">...</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center transition hover:shadow-md border-l-4 border-l-red-500">
+                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xl mr-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div>
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Pending Jobs</p>
+                    <p id="stat-pending" class="text-3xl font-black text-gray-800 dark:text-gray-100">...</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center transition hover:shadow-md border-l-4 border-l-green-500">
+                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl mr-4"><i class="fa-solid fa-check-double"></i></div>
+                <div>
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Completed Jobs</p>
+                    <p id="stat-completed" class="text-3xl font-black text-gray-800 dark:text-gray-100">...</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center transition hover:shadow-md border-l-4 border-l-orange-500">
+                <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl mr-4"><i class="fa-solid fa-calendar-xmark"></i></div>
+                <div>
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Missed Services (Month)</p>
+                    <p class="text-3xl font-black text-gray-800 dark:text-gray-100 text-orange-600">02</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 col-span-1 flex flex-col h-[350px]">
+                <h3 class="text-md font-bold text-gray-800 dark:text-gray-100 mb-3 border-b pb-2"><i class="fa-solid fa-calendar-day text-orange-500 mr-2"></i>Today's Services</h3>
+                <div id="todaysServicesList" class="flex-1 overflow-y-auto space-y-3 pr-1 text-sm">
+                    <div class="text-center py-8 text-gray-400 dark:text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 col-span-2 overflow-hidden flex flex-col h-[350px]">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 flex justify-between items-center">
+                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Pending Breakdowns</h3>
+                    <a href="breakdowns.html" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
+                        View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </a>
+                </div>
+                <div id="pendingBreakdownsList" class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                    <div class="text-center py-8 text-gray-400 dark:text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000); updateClock();
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch(`${API_BASE}/all-breakdowns`);
+                const data = await response.json();
+
+                const pendingJobs = data.filter(item => item.job_status === 'Pending').length;
+                const completedJobs = data.filter(item => item.job_status === 'Job Done').length;
+
+                document.getElementById('stat-pending').textContent = pendingJobs;
+                document.getElementById('stat-completed').textContent = completedJobs;
+
+                renderPendingBreakdownsWidget(data.filter(item => item.job_status === 'Pending'));
+
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        // Reuses the same /all-breakdowns fetch loadDashboardData() already
+        // does — no separate API call needed just to show a short list of
+        // what's still pending.
+        function renderPendingBreakdownsWidget(pendingItems) {
+            const container = document.getElementById('pendingBreakdownsList');
+
+            if (pendingItems.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No pending breakdowns — everything is fixed!</div>';
+                return;
+            }
+
+            container.innerHTML = pendingItems.slice(0, 5).map(row => {
+                const dateObj = new Date(row.informed_date);
+                const formattedDate = isNaN(dateObj) ? row.informed_date : dateObj.toISOString().split('T')[0];
+
+                return `
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50">
+                        <div>
+                            <span class="font-black text-blue-600 block">${row.unit_no}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold">${row.category} &middot; Informed ${formattedDate}</span>
+                        </div>
+                        <button onclick="markJobAsDone(${row.id}, '${row.unit_no}')" class="bg-red-500 hover:bg-red-600 text-white font-bold px-2.5 py-1 rounded shadow-sm text-[10px] uppercase transition flex items-center gap-1">
+                            <i class="fa-solid fa-clock"></i> Pending
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadTodaysServices() {
+            const container = document.getElementById('todaysServicesList');
+            try {
+                const response = await fetch(`${API_BASE}/services`);
+                const data = await response.json();
+                const today = new Date().toISOString().split('T')[0];
+
+                const todaysServices = data.filter(row => {
+                    const dateObj = new Date(row.service_date);
+                    const rowDate = isNaN(dateObj) ? row.service_date : dateObj.toISOString().split('T')[0];
+                    return rowDate === today;
+                });
+
+                if (todaysServices.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No services scheduled for today.</div>';
+                    return;
+                }
+
+                container.innerHTML = todaysServices.map(row => {
+                    const isDone = row.status === 'Completed';
+                    const cardStyle = isDone ? 'bg-green-50/60 border-green-100' : 'bg-blue-50/60 border-blue-100';
+                    const unitStyle = isDone ? 'text-green-700' : 'text-blue-700';
+                    const badge = isDone
+                        ? '<span class="bg-green-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-check mr-1"></i>Done</span>'
+                        : `<span class="bg-blue-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-user-wrench mr-1"></i>${row.technicians || 'Unassigned'}</span>`;
+
+                    return `
+                        <div class="p-3 ${cardStyle} rounded-lg border flex justify-between items-start">
+                            <div>
+                                <span class="font-black ${unitStyle} block">${row.unit_no}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold">${row.service_type}</span>
+                            </div>
+                            ${badge}
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error fetching today's services:", error);
+                container.innerHTML = '<div class="text-center py-8 text-red-400 font-bold">Failed to load today\'s services.</div>';
+            }
+        }
+
+        async function markJobAsDone(jobId, unitNo) {
+            const actions = prompt(`What action was taken to fix ${unitNo}?`);
+            if (actions === null) return; 
+            if (actions.trim() === "") { alert("You must specify actions taken to complete the job!"); return; }
+
+            const now = new Date();
+            const todayDate = now.toISOString().split('T')[0];
+            const todayTime = now.toTimeString().split(' ')[0].substring(0,5);
+
+            try {
+                const response = await fetch(`${API_BASE}/breakdowns/${jobId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        actions_taken: actions,
+                        attended_date: todayDate,
+                        attended_time: todayTime
+                    })
+                });
+
+                if (response.ok) {
+                    alert(`🎉 Job for ${unitNo} successfully marked as COMPLETED!`);
+                    loadDashboardData(); 
+                } else {
+                    alert("Failed to update status.");
+                }
+            } catch (error) {
+                console.error("Error updating status:", error);
+                alert("Server error while updating.");
+            }
+        }
+
+        window.onload = function () {
+            loadDashboardData();
+            loadTodaysServices();
+        };
+    </script>
+</body>
+</html>

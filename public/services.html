@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services - ElevateCare</title>
+    <script>
+        // Applied before Tailwind paints anything, so there's no flash of the
+        // wrong theme on load. Toggle logic itself lives in js/theme.js.
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) document.documentElement.classList.add('dark');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+
+    <div id="sidebar-root"></div>
+    <script src="js/config.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/footer.js"></script>
+
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
+
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Maintenance & Services</h1>
+                <p class="text-gray-500 dark:text-gray-400 font-semibold">Schedule, track, and manage routine elevator servicing.</p>
+            </div>
+            <button onclick="switchTab('add-service')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-plus"></i> Schedule New Service
+            </button>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+
+            <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-4 sm:px-6 pt-4 gap-4 sm:gap-6 overflow-x-auto">
+                <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-btn pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">
+                    <i class="fa-solid fa-list-check mr-1"></i> Upcoming & Overdue
+                </button>
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-800 whitespace-nowrap">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> Service History
+                </button>
+            </div>
+
+            <div class="p-6">
+                
+                <div id="content-schedule" class="tab-content block overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                                <th class="py-3 px-4">Scheduled Date</th>
+                                <th class="py-3 px-4">Unit No</th>
+                                <th class="py-3 px-4">Service Type</th>
+                                <th class="py-3 px-4">Assigned To</th>
+                                <th class="py-3 px-4 text-center">Status</th>
+                                <th class="py-3 px-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcomingTableBody" class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400 dark:text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading schedules...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="content-add-service" class="tab-content hidden max-w-3xl mx-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-calendar-plus text-blue-500 mr-2"></i>Schedule New Service</h2>
+                        <button type="button" onclick="switchTab('schedule')" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <form id="serviceForm" class="space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Select Unit (BD 2) *</label>
+                                <select id="unit_no" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 font-bold text-blue-700" required>
+                                    <option value="">-- Choose Unit --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Service Date *</label>
+                                <input type="date" id="service_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Service Type *</label>
+                                <select id="service_type" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500" required>
+                                    <option value="">-- Select Type --</option>
+                                    <option value="Routine Monthly Service">Routine Monthly Service</option>
+                                    <option value="Quarterly Checkup">Quarterly Checkup</option>
+                                    <option value="Annual Full Inspection">Annual Full Inspection</option>
+                                    <option value="Oil & Lubrication">Oil & Lubrication</option>
+                                    <option value="Rope & Governor Check">Rope & Governor Check</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Assign Technician(s) *</label>
+                                <div class="w-full border rounded-lg p-2 text-sm bg-white dark:bg-gray-800 h-24 overflow-y-auto outline-none focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Rifki" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Rifki</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dias" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Dias</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharusha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharusha</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Pathum" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Pathum</span></label>
+                                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Kamal" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Kamal</span></label>
+                                </div>
+                            </div>
+
+                            <div class="col-span-1 sm:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Special Notes / Instructions (Optional)</label>
+                                <textarea id="notes" rows="2" placeholder="Any specific areas to check... (Optional)" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+                        </div>
+                        <div id="formMessage" class="hidden p-3 mt-3 rounded text-sm font-bold text-center"></div>
+                        <div class="flex justify-end pt-4 border-t">
+                            <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg shadow-md transition">
+                                <i class="fa-solid fa-calendar-plus mr-2"></i> Save Schedule
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="content-history" class="tab-content hidden">
+                    <div class="relative mb-3">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 dark:text-gray-500"></i>
+                        <input type="text" id="historySearchInput" placeholder="Search by unit, service type or technician..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div class="flex flex-wrap gap-3 mb-4 items-center">
+                        <select id="historyTypeFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Service Type: All</option>
+                            <option value="Routine Monthly Service">Routine Monthly Service</option>
+                            <option value="Quarterly Checkup">Quarterly Checkup</option>
+                            <option value="Annual Full Inspection">Annual Full Inspection</option>
+                            <option value="Oil & Lubrication">Oil & Lubrication</option>
+                            <option value="Rope & Governor Check">Rope & Governor Check</option>
+                        </select>
+                        <div class="flex items-center gap-2">
+                            <label for="historyFromDate" class="text-xs font-bold text-gray-500 dark:text-gray-400">From</label>
+                            <input type="date" id="historyFromDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="historyToDate" class="text-xs font-bold text-gray-500 dark:text-gray-400">To</label>
+                            <input type="date" id="historyToDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button type="button" onclick="clearServiceHistoryDateFilter()" class="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-500 transition px-2 py-2">
+                            <i class="fa-solid fa-xmark mr-1"></i>Clear dates
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>Click a row to see full details.</p>
+
+                    <div class="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                                    <th class="py-3 px-4">Completed Date</th>
+                                    <th class="py-3 px-4">Unit No</th>
+                                    <th class="py-3 px-4">Service Type</th>
+                                    <th class="py-3 px-4 text-center">Status</th>
+                                    <th class="py-3 px-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Detail Modal (read-only) -->
+    <div id="viewModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i>Service Details</h2>
+                <button onclick="closeViewModal()" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="viewModalBody" class="space-y-4 text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Edit Service Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Edit Service</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="editServiceForm" class="space-y-4">
+                <input type="hidden" id="edit_id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Unit No *</label>
+                    <input type="text" id="edit_unit_no" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Service Date *</label>
+                    <input type="date" id="edit_service_date" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Service Type *</label>
+                    <select id="edit_service_type" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Select Type --</option>
+                        <option value="Routine Monthly Service">Routine Monthly Service</option>
+                        <option value="Quarterly Checkup">Quarterly Checkup</option>
+                        <option value="Annual Full Inspection">Annual Full Inspection</option>
+                        <option value="Oil & Lubrication">Oil & Lubrication</option>
+                        <option value="Rope & Governor Check">Rope & Governor Check</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Assign Technician(s)</label>
+                    <div class="w-full border rounded-lg p-2 text-sm bg-white dark:bg-gray-800 h-24 overflow-y-auto outline-none focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                        <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Rifki" class="edit-tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Rifki</span></label>
+                        <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dias" class="edit-tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Dias</span></label>
+                        <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharusha" class="edit-tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharusha</span></label>
+                        <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Pathum" class="edit-tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Pathum</span></label>
+                        <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Kamal" class="edit-tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Kamal</span></label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Notes</label>
+                    <textarea id="edit_notes" rows="2" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                    <select id="edit_status" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" id="editSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition">
+                        <i class="fa-solid fa-check mr-1"></i> Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm / Alert Dialog -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
+            <div id="confirmIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl"></div>
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1"></h3>
+            <p id="confirmMessage" class="text-sm text-gray-500 dark:text-gray-400 mb-6"></p>
+            <div class="flex justify-center gap-3">
+                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 transition">Cancel</button>
+                <button id="confirmOkBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications: bottom of screen, color-coded, auto-dismiss -->
+    <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none w-full px-4"></div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                el.classList.add('text-gray-500 dark:text-gray-400');
+            });
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            document.getElementById('content-' + tabName).classList.add('block');
+
+            // 'add-service' has no tab-bar button of its own anymore (only the
+            // "Schedule New Service" button above opens it) — guard against
+            // that so switching to it doesn't throw on a missing element.
+            const tabBtn = document.getElementById('tab-' + tabName);
+            if (tabBtn) {
+                tabBtn.classList.remove('text-gray-500 dark:text-gray-400');
+                tabBtn.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            }
+        }
+
+        function populateBD2Units() {
+            const bd2Units = [
+                "PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36",
+                "SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09",
+                "FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08",
+                "ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"
+            ];
+            
+            const unitSelect = document.getElementById('unit_no');
+            bd2Units.forEach(unit => {
+                const opt = document.createElement('option');
+                opt.value = unit;
+                opt.textContent = unit;
+                unitSelect.appendChild(opt);
+            });
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // Consistent fallback wording — every add/update/delete error path uses
+        // this same message unless the server gave a more specific one.
+        const GENERIC_ERROR = 'Something went wrong. Please try again.';
+
+        // Success/error feedback: bottom-of-screen toast, colored by type,
+        // auto-dismisses after 3s.
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const styles = { success: 'bg-green-600', error: 'bg-red-600' };
+            const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check';
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto ${styles[type] || styles.success} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-2 opacity-0 transition-opacity duration-300 max-w-md`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Promise-based replacement for window.confirm() — resolves true/false,
+        // matches the app's own modal styling instead of the browser's dialog.
+        function showConfirm({ title, message, okText = 'Confirm', okColor = 'bg-blue-600 hover:bg-blue-700', icon = 'fa-solid fa-circle-question', iconColor = 'bg-blue-100 text-blue-600' }) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('confirmModal');
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                document.getElementById('confirmTitle').textContent = title;
+                document.getElementById('confirmMessage').textContent = message;
+
+                const iconEl = document.getElementById('confirmIcon');
+                iconEl.className = `w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl ${iconColor}`;
+                iconEl.innerHTML = `<i class="${icon}"></i>`;
+
+                okBtn.textContent = okText;
+                okBtn.className = `px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition ${okColor}`;
+
+                modal.classList.remove('hidden');
+
+                function cleanup(result) {
+                    modal.classList.add('hidden');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        function detailRow(label, value) {
+            return `
+                <div>
+                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">${escapeHtml(label)}</div>
+                    <div class="text-gray-800 dark:text-gray-100 mt-0.5">${value}</div>
+                </div>
+            `;
+        }
+
+        let allServices = [];
+
+        async function loadServices() {
+            try {
+                const response = await fetch(`${API_BASE}/services`);
+                allServices = await response.json();
+                renderUpcoming();
+                renderServiceHistory();
+            } catch (error) {
+                console.error("Error fetching services:", error);
+            }
+        }
+
+        function renderUpcoming() {
+            let upcomingHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+
+            allServices.filter(row => row.status === 'Scheduled').forEach(row => {
+                const dateObj = new Date(row.service_date);
+                const formattedDate = dateObj.toISOString().split('T')[0];
+                const isOverdue = formattedDate < today;
+                const dateStyle = isOverdue ? 'text-red-500' : 'text-gray-700 dark:text-gray-300';
+                const statusBadge = isOverdue
+                    ? '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-black uppercase">Overdue</span>'
+                    : '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-black uppercase">Upcoming</span>';
+
+                upcomingHTML += `
+                    <tr class="hover:bg-gray-50 border-b">
+                        <td class="py-3 px-4 font-bold ${dateStyle}">${formattedDate} <br><span class="text-[10px] text-gray-400 dark:text-gray-500 font-normal">${isOverdue ? 'Passed' : 'Scheduled'}</span></td>
+                        <td class="py-3 px-4 font-black text-blue-600">${row.unit_no}</td>
+                        <td class="py-3 px-4 font-semibold text-gray-800 dark:text-gray-100">${row.service_type}</td>
+                        <td class="py-3 px-4 text-xs font-bold text-gray-600 dark:text-gray-400"><i class="fa-solid fa-user-gear mr-1"></i> ${row.technicians}</td>
+                        <td class="py-3 px-4 text-center">${statusBadge}</td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="markServiceDone(${row.id})" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded text-[11px] font-bold shadow-sm transition">
+                                <i class="fa-solid fa-check mr-1"></i> Mark Done
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('upcomingTableBody').innerHTML = upcomingHTML || '<tr><td colspan="6" class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No upcoming services scheduled.</td></tr>';
+        }
+
+        function clearServiceHistoryDateFilter() {
+            document.getElementById('historyFromDate').value = '';
+            document.getElementById('historyToDate').value = '';
+            renderServiceHistory();
+        }
+
+        function renderServiceHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            const term = document.getElementById('historySearchInput').value.trim().toLowerCase();
+            const typeValue = document.getElementById('historyTypeFilter').value;
+            const fromDate = document.getElementById('historyFromDate').value;
+            const toDate = document.getElementById('historyToDate').value;
+
+            const filtered = allServices.filter(row => row.status === 'Completed').filter(row => {
+                const matchesTerm = !term ||
+                    (row.unit_no || '').toLowerCase().includes(term) ||
+                    (row.service_type || '').toLowerCase().includes(term) ||
+                    (row.technicians || '').toLowerCase().includes(term) ||
+                    (row.notes || '').toLowerCase().includes(term);
+                const matchesType = !typeValue || row.service_type === typeValue;
+                const dateObj = new Date(row.service_date);
+                const rowDate = isNaN(dateObj) ? '' : dateObj.toISOString().split('T')[0];
+                const matchesDate = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
+                return matchesTerm && matchesType && matchesDate;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No completed services match your search.</td></tr>';
+                return;
+            }
+
+            // Only the essentials show in the row — technicians and notes are
+            // in the detail modal, opened by clicking the row.
+            tbody.innerHTML = filtered.map(row => {
+                const dateObj = new Date(row.service_date);
+                const formattedDate = isNaN(dateObj) ? row.service_date : dateObj.toISOString().split('T')[0];
+
+                return `
+                    <tr class="hover:bg-gray-50 border-b cursor-pointer" onclick="viewService(${row.id})">
+                        <td class="py-3 px-4 font-bold text-gray-600 dark:text-gray-400">${escapeHtml(formattedDate)}</td>
+                        <td class="py-3 px-4 font-black text-gray-800 dark:text-gray-100">${escapeHtml(row.unit_no)}</td>
+                        <td class="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">${escapeHtml(row.service_type)}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Done</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="event.stopPropagation(); openEditServiceModal(${row.id})" class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="event.stopPropagation(); deleteService(${row.id})" class="text-red-600 hover:bg-red-50 p-2 rounded-md transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function viewService(id) {
+            const row = allServices.find(s => s.id === id);
+            if (!row) return;
+
+            const dateObj = new Date(row.service_date);
+            const formattedDate = isNaN(dateObj) ? row.service_date : dateObj.toISOString().split('T')[0];
+            const statusBadge = row.status === 'Completed'
+                ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Completed</span>'
+                : '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-black uppercase">Scheduled</span>';
+
+            document.getElementById('viewModalBody').innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    ${detailRow('Unit No', `<span class="font-bold text-blue-600">${escapeHtml(row.unit_no)}</span>`)}
+                    ${detailRow('Service Type', escapeHtml(row.service_type))}
+                    ${detailRow('Service Date', escapeHtml(formattedDate))}
+                    ${detailRow('Status', statusBadge)}
+                </div>
+                ${detailRow('Technicians', escapeHtml(row.technicians || 'Not assigned'))}
+                ${detailRow('Notes', escapeHtml(row.notes || '—'))}
+            `;
+            document.getElementById('viewModal').classList.remove('hidden');
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.add('hidden');
+        }
+
+        function openEditServiceModal(id) {
+            const row = allServices.find(s => s.id === id);
+            if (!row) return;
+
+            const dateObj = new Date(row.service_date);
+            const formattedDate = isNaN(dateObj) ? '' : dateObj.toISOString().split('T')[0];
+
+            document.getElementById('edit_id').value = row.id;
+            document.getElementById('edit_unit_no').value = row.unit_no || '';
+            document.getElementById('edit_service_date').value = formattedDate;
+            document.getElementById('edit_service_type').value = row.service_type || '';
+            document.getElementById('edit_notes').value = row.notes || '';
+            document.getElementById('edit_status').value = row.status || 'Scheduled';
+
+            const selectedTechs = (row.technicians || '').split(' / ').map(t => t.trim());
+            document.querySelectorAll('.edit-tech-checkbox').forEach(cb => {
+                cb.checked = selectedTechs.includes(cb.value);
+            });
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        document.getElementById('editServiceForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const id = document.getElementById('edit_id').value;
+            const unitNo = document.getElementById('edit_unit_no').value.trim();
+
+            const confirmed = await showConfirm({
+                title: 'Save changes?',
+                message: `Save changes to the service record for "${unitNo}"?`,
+                okText: 'Save',
+                okColor: 'bg-blue-600 hover:bg-blue-700',
+                icon: 'fa-solid fa-pen-to-square',
+                iconColor: 'bg-blue-100 text-blue-600'
+            });
+            if (!confirmed) return;
+
+            const btn = document.getElementById('editSubmitBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const selectedTechs = Array.from(document.querySelectorAll('.edit-tech-checkbox:checked')).map(cb => cb.value).join(' / ');
+
+            const formData = {
+                unit_no: unitNo,
+                service_date: document.getElementById('edit_service_date').value,
+                service_type: document.getElementById('edit_service_type').value,
+                technicians: selectedTechs,
+                notes: document.getElementById('edit_notes').value.trim() || '-',
+                status: document.getElementById('edit_status').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/services/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    closeEditModal();
+                    loadServices();
+                    showToast('Service updated successfully!', 'success');
+                } else {
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Update';
+                btn.disabled = false;
+            }
+        });
+
+        async function deleteService(id) {
+            const row = allServices.find(s => s.id === id);
+            if (!row) return;
+
+            const confirmed = await showConfirm({
+                title: 'Delete service record?',
+                message: `Delete the service record for "${row.unit_no}"? This cannot be undone.`,
+                okText: 'Delete',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/services/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadServices();
+                    showToast('Service deleted successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        document.getElementById('historySearchInput').addEventListener('input', renderServiceHistory);
+        document.getElementById('historyTypeFilter').addEventListener('change', renderServiceHistory);
+        document.getElementById('historyFromDate').addEventListener('change', renderServiceHistory);
+        document.getElementById('historyToDate').addEventListener('change', renderServiceHistory);
+
+  // 3. Add New Service Data
+        document.getElementById('serviceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('formMessage');
+
+            const selectedTechs = Array.from(document.querySelectorAll('.tech-checkbox:checked')).map(cb => cb.value).join(' / ');
+            
+            if (!selectedTechs) {
+                alert("Please select at least one technician!");
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const formData = {
+                unit_no: document.getElementById('unit_no').value,
+                service_date: document.getElementById('service_date').value,
+                service_type: document.getElementById('service_type').value,
+                technicians: selectedTechs, 
+                notes: document.getElementById('notes').value.trim() || "-"
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/services`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    msg.className = "p-3 mt-3 rounded text-sm font-bold text-center bg-green-100 text-green-700 block";
+                    msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + result.message;
+                    document.getElementById('serviceForm').reset();
+                    document.querySelectorAll('.tech-checkbox').forEach(cb => cb.checked = false); 
+                    loadServices(); 
+                } else {
+                    // ⚠️ METHANA WENAS KALA: Error eka screen ekema pennanawa ⚠️
+                    msg.className = "p-3 mt-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block";
+                    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Server Error: ' + (result.error || "Unknown Error");
+                    alert("Developer Info: " + result.error); // Alert ekakuth danawa pahasuwata
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Network error: Cannot connect to Node server!");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-calendar-plus mr-2"></i> Save Schedule';
+                btn.disabled = false;
+                setTimeout(() => msg.classList.add('hidden'), 5000);
+            }
+        });
+
+        async function markServiceDone(id) {
+            const confirmed = await showConfirm({
+                title: 'Mark as completed?',
+                message: 'Are you sure you want to mark this service as Completed?',
+                okText: 'Mark Done',
+                okColor: 'bg-green-600 hover:bg-green-700',
+                icon: 'fa-solid fa-check',
+                iconColor: 'bg-green-100 text-green-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/services/${id}`, { method: 'PUT' });
+                if (response.ok) {
+                    loadServices();
+                    showToast('Service marked as completed!', 'success');
+                } else {
+                    showToast(GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        window.onload = function() {
+            populateBD2Units(); 
+            loadServices();     
+        };
+    </script>
+</body>
+</html>
