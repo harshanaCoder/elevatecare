@@ -4,77 +4,388 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - ElevateCare</title>
-    <script>
-        // Applied before Tailwind paints anything, so there's no flash of the
-        // wrong theme on load. The full toggle logic lives in js/theme.js —
-        // this inline copy only needs to run once, synchronously, this early.
-        (function () {
-            try {
-                var stored = localStorage.getItem('theme');
-                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                if (isDark) document.documentElement.classList.add('dark');
-            } catch (e) { /* ignore */ }
-        })();
-    </script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/theme.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+<body class="bg-gray-100 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/theme.js"></script>
     <script src="js/footer.js"></script>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
 
         <div class="mb-6">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Settings</h1>
-            <p class="text-gray-500 dark:text-gray-400">Personal preferences for this browser.</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Settings</h1>
+            <p class="text-gray-500">Application preferences and shared data.</p>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 max-w-xl">
-            <h2 class="text-md font-bold text-gray-800 dark:text-gray-100 mb-1"><i class="fa-solid fa-circle-half-stroke text-blue-500 mr-2"></i>Appearance</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">Switch between light and dark mode. This is saved on this device only.</p>
+        <div id="managedListsGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-md font-bold text-gray-800 mb-1"><i class="fa-solid fa-user-gear text-blue-500 mr-2"></i>Technicians</h2>
+                <p class="text-sm text-gray-500 mb-5">Names available for assignment on Breakdowns and Services.</p>
 
-            <div class="flex items-center justify-between gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center gap-3">
-                    <div id="themeIcon" class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 text-lg">
-                        <i class="fa-solid fa-sun"></i>
-                    </div>
-                    <div>
-                        <p id="themeLabel" class="font-bold text-gray-800 dark:text-gray-100">Light Mode</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Click the switch to toggle appearance</p>
-                    </div>
-                </div>
+                <form id="addTechnicianForm" class="flex gap-2 mb-4">
+                    <input type="text" id="newTechnicianName" placeholder="Technician name" required
+                        class="flex-1 border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 rounded-lg shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </form>
 
-                <button id="themeToggle" type="button" role="switch" aria-label="Toggle dark mode"
-                    class="relative inline-flex h-8 w-14 items-center rounded-full transition-colors bg-gray-300 dark:bg-blue-600 shrink-0">
-                    <span id="themeToggleKnob" class="inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform translate-x-1 dark:translate-x-7"></span>
-                </button>
+                <ul id="technicianList" class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden overflow-y-auto max-h-80"></ul>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-md font-bold text-gray-800 mb-1"><i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Breakdown Types</h2>
+                <p class="text-sm text-gray-500 mb-5">Categories available on Breakdowns, Pending and Reports.</p>
+
+                <form id="addBreakdownTypeForm" class="flex gap-2 mb-4">
+                    <input type="text" id="newBreakdownTypeName" placeholder="Breakdown type" required
+                        class="flex-1 border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 rounded-lg shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </form>
+
+                <ul id="breakdownTypeList" class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden overflow-y-auto max-h-80"></ul>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-md font-bold text-gray-800 mb-1"><i class="fa-solid fa-screwdriver-wrench text-green-600 mr-2"></i>Service Types</h2>
+                <p class="text-sm text-gray-500 mb-5">Types available when scheduling a service.</p>
+
+                <form id="addServiceTypeForm" class="flex gap-2 mb-4">
+                    <input type="text" id="newServiceTypeName" placeholder="Service type" required
+                        class="flex-1 border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 rounded-lg shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </form>
+
+                <ul id="serviceTypeList" class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden overflow-y-auto max-h-80"></ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Confirm / Alert Dialog -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
+            <div id="confirmIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl"></div>
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-1"></h3>
+            <p id="confirmMessage" class="text-sm text-gray-500 mb-6"></p>
+            <div class="flex justify-center gap-3">
+                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                <button id="confirmOkBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition">Confirm</button>
             </div>
         </div>
     </div>
 
+    <!-- Toast notifications: bottom of screen, color-coded, auto-dismiss -->
+    <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none w-full px-4"></div>
+
     <script>
-        function refreshThemeUI() {
-            const isDark = ElevateTheme.getTheme() === 'dark';
-            document.getElementById('themeLabel').textContent = isDark ? 'Dark Mode' : 'Light Mode';
-            document.getElementById('themeIcon').innerHTML = isDark
-                ? '<i class="fa-solid fa-moon"></i>'
-                : '<i class="fa-solid fa-sun"></i>';
+        const GENERIC_ERROR = 'Something went wrong. Please try again.';
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
-        document.getElementById('themeToggle').addEventListener('click', function () {
-            ElevateTheme.toggleTheme();
-            refreshThemeUI();
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const styles = { success: 'bg-green-600', error: 'bg-red-600' };
+            const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check';
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto ${styles[type] || styles.success} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-2 opacity-0 transition-opacity duration-300 max-w-md`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function showConfirm({ title, message, okText = 'Confirm', okColor = 'bg-blue-600 hover:bg-blue-700', icon = 'fa-solid fa-circle-question', iconColor = 'bg-blue-100 text-blue-600' }) {
+            return new Promise(resolve => {
+                const modal = document.getElementById('confirmModal');
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                document.getElementById('confirmTitle').textContent = title;
+                document.getElementById('confirmMessage').textContent = message;
+
+                const iconEl = document.getElementById('confirmIcon');
+                iconEl.className = `w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl ${iconColor}`;
+                iconEl.innerHTML = `<i class="${icon}"></i>`;
+
+                okBtn.textContent = okText;
+                okBtn.className = `px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition ${okColor}`;
+
+                modal.classList.remove('hidden');
+
+                function cleanup(result) {
+                    modal.classList.add('hidden');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        async function loadTechnicians() {
+            const list = document.getElementById('technicianList');
+            list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">Loading...</li>';
+            try {
+                const response = await fetch(`${API_BASE}/technician-names`);
+                const technicians = await response.json();
+                if (!technicians.length) {
+                    list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">No technicians added yet.</li>';
+                    return;
+                }
+                list.innerHTML = technicians.map(t => `
+                    <li class="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span>
+                        <button onclick="deleteTechnician(${t.id}, '${escapeHtml(t.name)}')" class="text-gray-400 hover:text-red-600 transition" aria-label="Delete ${escapeHtml(t.name)}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </li>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<li class="p-4 text-center text-sm text-red-400 font-bold">Failed to load technicians.</li>';
+            }
+        }
+
+        document.getElementById('addTechnicianForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const input = document.getElementById('newTechnicianName');
+            const name = input.value.trim();
+            if (!name) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/technician-names`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (response.ok) {
+                    input.value = '';
+                    loadTechnicians();
+                    showToast('Technician added successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
         });
 
-        // theme.js's initial classList toggle already ran via the inline
-        // script above; this just syncs the label/icon to match on load.
-        refreshThemeUI();
+        async function deleteTechnician(id, name) {
+            const confirmed = await showConfirm({
+                title: 'Delete technician?',
+                message: `Remove "${name}" from the technician list? This cannot be undone.`,
+                okText: 'Delete',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/technician-names/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadTechnicians();
+                    showToast('Technician deleted successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        async function loadBreakdownTypes() {
+            const list = document.getElementById('breakdownTypeList');
+            list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">Loading...</li>';
+            try {
+                const response = await fetch(`${API_BASE}/breakdown-types`);
+                const types = await response.json();
+                if (!types.length) {
+                    list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">No breakdown types added yet.</li>';
+                    return;
+                }
+                list.innerHTML = types.map(t => `
+                    <li class="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span>
+                        <button onclick="deleteBreakdownType(${t.id}, '${escapeHtml(t.name)}')" class="text-gray-400 hover:text-red-600 transition" aria-label="Delete ${escapeHtml(t.name)}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </li>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<li class="p-4 text-center text-sm text-red-400 font-bold">Failed to load breakdown types.</li>';
+            }
+        }
+
+        document.getElementById('addBreakdownTypeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const input = document.getElementById('newBreakdownTypeName');
+            const name = input.value.trim();
+            if (!name) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/breakdown-types`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (response.ok) {
+                    input.value = '';
+                    loadBreakdownTypes();
+                    showToast('Breakdown type added successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        });
+
+        async function deleteBreakdownType(id, name) {
+            const confirmed = await showConfirm({
+                title: 'Delete breakdown type?',
+                message: `Remove "${name}" from the breakdown type list? This cannot be undone.`,
+                okText: 'Delete',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/breakdown-types/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadBreakdownTypes();
+                    showToast('Breakdown type deleted successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        async function loadServiceTypes() {
+            const list = document.getElementById('serviceTypeList');
+            list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">Loading...</li>';
+            try {
+                const response = await fetch(`${API_BASE}/service-types`);
+                const types = await response.json();
+                if (!types.length) {
+                    list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">No service types added yet.</li>';
+                    return;
+                }
+                list.innerHTML = types.map(t => `
+                    <li class="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span>
+                        <button onclick="deleteServiceType(${t.id}, '${escapeHtml(t.name)}')" class="text-gray-400 hover:text-red-600 transition" aria-label="Delete ${escapeHtml(t.name)}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </li>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<li class="p-4 text-center text-sm text-red-400 font-bold">Failed to load service types.</li>';
+            }
+        }
+
+        document.getElementById('addServiceTypeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const input = document.getElementById('newServiceTypeName');
+            const name = input.value.trim();
+            if (!name) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/service-types`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (response.ok) {
+                    input.value = '';
+                    loadServiceTypes();
+                    showToast('Service type added successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        });
+
+        async function deleteServiceType(id, name) {
+            const confirmed = await showConfirm({
+                title: 'Delete service type?',
+                message: `Remove "${name}" from the service type list? This cannot be undone.`,
+                okText: 'Delete',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/service-types/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadServiceTypes();
+                    showToast('Service type deleted successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        // This settings data is shared across the whole app, so it's admin-only
+        // — same /api/auth/me check sidebar.js uses to trim nav links for
+        // non-admin roles (the 'reports' role can see this page for its own
+        // section, but has no server-side access to these APIs).
+        fetch(`${API_BASE}/auth/me`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.role === 'admin') {
+                    document.getElementById('managedListsGrid').classList.remove('hidden');
+                    loadTechnicians();
+                    loadBreakdownTypes();
+                    loadServiceTypes();
+                }
+            })
+            .catch(() => {});
     </script>
 </body>
 </html>

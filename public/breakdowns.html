@@ -4,44 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Breakdowns - ElevateCare</title>
-    <script>
-        // Applied before Tailwind paints anything, so there's no flash of the
-        // wrong theme on load. Toggle logic itself lives in js/theme.js.
-        (function () {
-            try {
-                var stored = localStorage.getItem('theme');
-                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                if (isDark) document.documentElement.classList.add('dark');
-            } catch (e) { /* ignore */ }
-        })();
-    </script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/theme.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+<body class="bg-gray-100 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/theme.js"></script>
     <script src="js/footer.js"></script>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Breakdowns</h1>
-                <p class="text-gray-500 dark:text-gray-400">Log new breakdowns and review breakdown history.</p>
+                <h1 class="text-3xl font-bold text-gray-800">Breakdowns</h1>
+                <p class="text-gray-500">Log new breakdowns and review breakdown history.</p>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 
-            <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-4 sm:px-6 pt-4 gap-4 sm:gap-6 overflow-x-auto">
+            <div class="flex border-b border-gray-200 bg-gray-50 px-4 sm:px-6 pt-4 gap-4 sm:gap-6 overflow-x-auto">
                 <button onclick="switchTab('new-entry')" id="tab-new-entry" class="tab-btn pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">
                     <i class="fa-solid fa-plus mr-1"></i> New Breakdown Entry
                 </button>
-                <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-800 whitespace-nowrap">
+                <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800 whitespace-nowrap">
                     <i class="fa-solid fa-clock-rotate-left mr-1"></i> History & Recommended Actions
                 </button>
             </div>
@@ -52,29 +39,29 @@
             <form id="breakdownForm" class="space-y-6">
                 
                 <div>
-                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 border-b pb-2 mb-4"><i class="fa-solid fa-phone-volume text-blue-500 mr-2"></i>Informed Details</h3>
+                    <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-phone-volume text-blue-500 mr-2"></i>Informed Details</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Date *</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Informed Date *</label>
                             <input type="date" id="informed_date" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Time *</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Informed Time *</label>
                             <input type="time" id="informed_time" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed By (Name) *</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Informed By (Name) *</label>
                             <input type="text" id="informed_by" required placeholder="e.g. Mr. Sunil (Sec)" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 border-b pb-2 mb-4"><i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Issue Details</h3>
+                    <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Issue Details</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-gray-50 dark:bg-gray-900/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">1. Select Building *</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">1. Select Building *</label>
                             <select id="bldg_select" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">-- Choose Building --</option>
                                 <option value="BD_01">BD_01</option>
@@ -83,13 +70,13 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">2. Select Lift Type *</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">2. Select Lift Type *</label>
                             <select id="type_select" required disabled class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">-- Choose Type --</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">3. Select Unit No *</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">3. Select Unit No *</label>
                             <select id="unit_no" required disabled class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 font-bold text-blue-700">
                                 <option value="">-- Choose Unit --</option>
                             </select>
@@ -98,22 +85,13 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Breakdown Category *</label>
-                            <select id="category" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700 dark:text-gray-300">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Breakdown Category *</label>
+                            <select id="category" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700">
                                 <option value="">-- Select Fault Type --</option>
-                                <option>Door System Failure</option>
-                                <option>Minor Breakdown</option>
-                                <option>Electrical / Control Failure</option>
-                                <option>Mechanical Failure</option>
-                                <option>Power Failure</option>
-                                <option>Communication Failure</option>
-                                <option>Safety Error</option>
-                                <option>Major Breakdown</option>
-                                <option>Passenger Entrapment</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nature of Breakdown *</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Nature of Breakdown *</label>
                             <textarea id="nature_of_breakdown" required rows="1" placeholder="Briefly describe the issue..." class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                         </div>
                     </div>
@@ -122,50 +100,30 @@
                 <div>
                     <label class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 cursor-pointer">
                         <input type="checkbox" id="action_taken_toggle" class="w-4 h-4 text-blue-600 rounded">
-                        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">Action already taken for this breakdown?</span>
+                        <span class="text-sm font-bold text-gray-700">Action already taken for this breakdown?</span>
                     </label>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Leave unticked to log it as <span class="font-semibold text-yellow-600">Pending</span>. Tick it to fill in attendance details and mark it <span class="font-semibold text-green-600">Job Done</span>.</p>
+                    <p class="text-xs text-gray-400 mt-1">Leave unticked to log it as <span class="font-semibold text-yellow-600">Pending</span>. Tick it to fill in attendance details and mark it <span class="font-semibold text-green-600">Job Done</span>.</p>
                 </div>
 
                 <div id="actionAttendanceSection" class="hidden">
-                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300 border-b pb-2 mb-4"><i class="fa-solid fa-screwdriver-wrench text-green-500 mr-2"></i>Action & Attendance</h3>
+                    <h3 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-screwdriver-wrench text-green-500 mr-2"></i>Action & Attendance</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Date</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Attended Date</label>
                             <input type="date" id="attended_date" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Time</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Attended Time</label>
                             <input type="time" id="attended_time" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                        <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended By (Select Technicians) *</label>
-                            <div class="w-full border rounded p-2 text-sm bg-white dark:bg-gray-800 h-24 overflow-y-auto border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Rifki" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Rifki</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dias" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Dias</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharusha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharusha</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Pathum" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Pathum</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Kamal" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Kamal</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharuka" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharuka</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sadeepa" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Sadeepa</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Adhikari" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Adhikari</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Minhaj" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Minhaj</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Shehan" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Shehan</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Amos" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Amos</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Ashen" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Ashen</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Tharindu" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Tharindu</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Wijerathne" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Wijerathne</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sampath" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Sampath</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Somasiri" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Somasiri</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Dc" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">DC</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Botheju" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Botheju</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Deshan" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Deshan</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Sachintha" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Sachintha</span></label>
-                                <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="Janith" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700 dark:text-gray-300">Janith</span></label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Attended By (Select Technicians) *</label>
+                            <div id="techCheckboxContainer" class="w-full border rounded p-2 text-sm bg-white h-24 overflow-y-auto border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                                <p class="text-xs text-gray-400 p-1">Loading technicians...</p>
                             </div>
                         </div>
                         <div class="col-span-1 md:col-span-2">
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Actions Taken</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Actions Taken</label>
                             <input type="text" id="actions_taken" placeholder="What was fixed?" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
@@ -183,11 +141,11 @@
 
             <div id="content-history" class="tab-content hidden">
                 <div class="relative mb-3">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 dark:text-gray-500"></i>
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400"></i>
                     <input type="text" id="historySearchInput" placeholder="Search by unit, category or description..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
                 <div class="flex flex-wrap gap-3 mb-4 items-center">
-                    <select id="historyCategoryFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="historyCategoryFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Category: All</option>
                         <option>Door System Failure</option>
                         <option>Minor Breakdown</option>
@@ -199,30 +157,30 @@
                         <option>Major Breakdown</option>
                         <option>Passenger Entrapment</option>
                     </select>
-                    <select id="historyStatusFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="historyStatusFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Status: All</option>
                         <option value="Pending">Pending</option>
                         <option value="Job Done">Job Done</option>
                     </select>
                     <div class="flex items-center gap-2">
-                        <label for="historyFromDate" class="text-xs font-bold text-gray-500 dark:text-gray-400">From</label>
-                        <input type="date" id="historyFromDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="historyFromDate" class="text-xs font-bold text-gray-500">From</label>
+                        <input type="date" id="historyFromDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div class="flex items-center gap-2">
-                        <label for="historyToDate" class="text-xs font-bold text-gray-500 dark:text-gray-400">To</label>
-                        <input type="date" id="historyToDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="historyToDate" class="text-xs font-bold text-gray-500">To</label>
+                        <input type="date" id="historyToDate" class="border rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-                    <button type="button" onclick="clearHistoryDateFilter()" class="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-red-500 transition px-2 py-2">
+                    <button type="button" onclick="clearHistoryDateFilter()" class="text-xs font-bold text-gray-500 hover:text-red-500 transition px-2 py-2">
                         <i class="fa-solid fa-xmark mr-1"></i>Clear dates
                     </button>
                 </div>
 
-                <p class="text-xs text-gray-400 dark:text-gray-500 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>Click a row to see full details.</p>
+                <p class="text-xs text-gray-400 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>Click a row to see full details.</p>
 
-                <div class="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+                <div class="overflow-x-auto rounded-lg border border-gray-100">
                     <table class="w-full text-left border-collapse min-w-[700px]">
                         <thead>
-                            <tr class="bg-gray-50 dark:bg-gray-900/40 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
                                 <th class="py-3 px-4">Date</th>
                                 <th class="py-3 px-4">Unit No</th>
                                 <th class="py-3 px-4">Category</th>
@@ -230,8 +188,8 @@
                                 <th class="py-3 px-4 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="historyTableBody" class="divide-y divide-gray-100 dark:divide-gray-700 text-sm text-gray-700 dark:text-gray-300">
-                            <tr><td colspan="5" class="text-center py-8 text-gray-400 dark:text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading history...</td></tr>
+                        <tbody id="historyTableBody" class="divide-y divide-gray-100 text-sm text-gray-700">
+                            <tr><td colspan="5" class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading history...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -243,10 +201,10 @@
 
     <!-- Breakdown Detail Modal (read-only) -->
     <div id="viewModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 pb-3 border-b">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i>Breakdown Details</h2>
-                <button onclick="closeViewModal()" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+                <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i>Breakdown Details</h2>
+                <button onclick="closeViewModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="viewModalBody" class="space-y-4 text-sm"></div>
         </div>
@@ -254,75 +212,61 @@
 
     <!-- Edit Breakdown Modal -->
     <div id="editModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Edit Breakdown</h2>
-                <button onclick="closeEditModal()" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+                <h2 class="text-lg font-bold text-gray-800">Edit Breakdown</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="editBreakdownForm" class="space-y-4">
                 <input type="hidden" id="edit_id">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Date</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Informed Date</label>
                         <input type="date" id="edit_informed_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed Time</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Informed Time</label>
                         <input type="time" id="edit_informed_time" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Informed By</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Informed By</label>
                         <input type="text" id="edit_informed_by" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Unit No *</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Unit No *</label>
                         <input type="text" id="edit_unit_no" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-700">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Category *</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Category *</label>
                         <select id="edit_category" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">-- Select Fault Type --</option>
-                            <option>Door System Failure</option>
-                            <option>Minor Breakdown</option>
-                            <option>Electrical / Control Failure</option>
-                            <option>Mechanical Failure</option>
-                            <option>Power Failure</option>
-                            <option>Communication Failure</option>
-                            <option>Safety Error</option>
-                            <option>Major Breakdown</option>
-                            <option>Passenger Entrapment</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Job Status</label>
-                        <select id="edit_job_status" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="Pending">Pending (Not Fixed)</option>
-                            <option value="Job Done">Job Done (Fixed)</option>
                         </select>
                     </div>
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nature of Breakdown *</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nature of Breakdown *</label>
                         <textarea id="edit_nature_of_breakdown" required rows="2" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Date</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Attended Date</label>
                         <input type="date" id="edit_attended_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended Time</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Attended Time</label>
                         <input type="time" id="edit_attended_time" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attended By</label>
-                        <input type="text" id="edit_attended_by" placeholder="e.g. Rifki / Dias" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Attended By (Select Technicians)</label>
+                        <div id="editTechCheckboxContainer" class="w-full border rounded-lg p-2 text-sm bg-white h-24 overflow-y-auto border-gray-300 shadow-inner">
+                            <p class="text-xs text-gray-400 p-1">Loading technicians...</p>
+                        </div>
                     </div>
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Actions Taken</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Actions Taken</label>
                         <input type="text" id="edit_actions_taken" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
-                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
                     <button type="submit" id="editSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition">
                         <i class="fa-solid fa-check mr-1"></i> Update
                     </button>
@@ -333,12 +277,12 @@
 
     <!-- Confirm / Alert Dialog -->
     <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
             <div id="confirmIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl"></div>
-            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1"></h3>
-            <p id="confirmMessage" class="text-sm text-gray-500 dark:text-gray-400 mb-6"></p>
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-1"></h3>
+            <p id="confirmMessage" class="text-sm text-gray-500 mb-6"></p>
             <div class="flex justify-center gap-3">
-                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 transition">Cancel</button>
+                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
                 <button id="confirmOkBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition">Confirm</button>
             </div>
         </div>
@@ -354,11 +298,11 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
             document.querySelectorAll('.tab-btn').forEach(el => {
                 el.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-                el.classList.add('text-gray-500 dark:text-gray-400');
+                el.classList.add('text-gray-500');
             });
             document.getElementById('content-' + tabName).classList.remove('hidden');
             document.getElementById('content-' + tabName).classList.add('block');
-            document.getElementById('tab-' + tabName).classList.remove('text-gray-500 dark:text-gray-400');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500');
             document.getElementById('tab-' + tabName).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
 
             if (tabName === 'history') loadHistory();
@@ -389,7 +333,7 @@
             'Power Failure': 'bg-purple-100 text-purple-700',
             'Communication Failure': 'bg-teal-100 text-teal-700',
             'Safety Error': 'bg-pink-100 text-pink-700',
-            'Major Breakdown': 'bg-gray-200 text-gray-700 dark:text-gray-300',
+            'Major Breakdown': 'bg-gray-200 text-gray-700',
             'Passenger Entrapment': 'bg-gray-900 text-white'
         };
         const DEFAULT_CATEGORY_BADGE = 'bg-blue-50 text-blue-600';
@@ -397,6 +341,46 @@
         function escapeHtml(str) {
             return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
+
+        // Technician checkboxes (both the new-entry form and the edit modal)
+        // come from Settings (shared list) instead of being hardcoded here —
+        // keeps this list, Pending's and Services' in sync.
+        async function loadTechnicianCheckboxes() {
+            const newContainer = document.getElementById('techCheckboxContainer');
+            const editContainer = document.getElementById('editTechCheckboxContainer');
+            try {
+                const response = await fetch(`${API_BASE}/technician-names`);
+                const technicians = await response.json();
+                const empty = '<p class="text-xs text-gray-400 p-1">No technicians added yet — add some from Settings.</p>';
+                newContainer.innerHTML = technicians.length ? technicians.map(t => `
+                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="${escapeHtml(t.name)}" class="tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span></label>
+                `).join('') : empty;
+                editContainer.innerHTML = technicians.length ? technicians.map(t => `
+                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="${escapeHtml(t.name)}" class="edit-tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span></label>
+                `).join('') : empty;
+            } catch (err) {
+                console.error(err);
+                const failed = '<p class="text-xs text-red-400 p-1">Failed to load technicians.</p>';
+                newContainer.innerHTML = failed;
+                editContainer.innerHTML = failed;
+            }
+        }
+        loadTechnicianCheckboxes();
+
+        // Breakdown categories come from Settings (shared list) instead of
+        // being hardcoded here — keeps this list, Pending's and Reports' in sync.
+        async function loadBreakdownTypeOptions() {
+            const selects = [document.getElementById('category'), document.getElementById('edit_category')];
+            try {
+                const response = await fetch(`${API_BASE}/breakdown-types`);
+                const types = await response.json();
+                const optionsHtml = types.map(t => `<option>${escapeHtml(t.name)}</option>`).join('');
+                selects.forEach(sel => { sel.insertAdjacentHTML('beforeend', optionsHtml); });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        loadBreakdownTypeOptions();
 
         // Consistent fallback wording — every add/update/delete error path uses
         // this same message unless the server gave a more specific one.
@@ -503,7 +487,7 @@
             });
 
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No breakdowns match your search.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 font-bold">No breakdowns match your search.</td></tr>';
                 return;
             }
 
@@ -519,9 +503,8 @@
                     ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Done</span>'
                     : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-clock mr-1"></i> Pending</span>';
 
-                return `
-                    <tr class="hover:bg-gray-50 border-b cursor-pointer" onclick="viewBreakdown(${row.id})">
-                        <td class="py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">${escapeHtml(formattedDate)}</td>
+                return `<tr class="hover:bg-gray-50 border-b cursor-pointer" onclick="viewBreakdown(${row.id})">
+                        <td class="py-3 px-4 font-semibold text-gray-700">${escapeHtml(formattedDate)}</td>
                         <td class="py-3 px-4 font-bold text-blue-600">${escapeHtml(row.unit_no)}</td>
                         <td class="py-3 px-4"><span class="${categoryClass} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span></td>
                         <td class="py-3 px-4 text-center">${statusBadge}</td>
@@ -535,10 +518,9 @@
         }
 
         function detailRow(label, value) {
-            return `
-                <div>
-                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">${escapeHtml(label)}</div>
-                    <div class="text-gray-800 dark:text-gray-100 mt-0.5">${value}</div>
+            return `<div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">${escapeHtml(label)}</div>
+                    <div class="text-gray-800 mt-0.5">${value}</div>
                 </div>
             `;
         }
@@ -554,8 +536,7 @@
                 : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-black uppercase"><i class="fa-solid fa-clock mr-1"></i> Pending</span>';
             const recommendation = RECOMMENDED_ACTIONS[row.category] || DEFAULT_RECOMMENDATION;
 
-            document.getElementById('viewModalBody').innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            document.getElementById('viewModalBody').innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     ${detailRow('Unit No', `<span class="font-bold text-blue-600">${escapeHtml(row.unit_no)}</span>`)}
                     ${detailRow('Category', `<span class="${categoryClass} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span>`)}
                     ${detailRow('Status', statusBadge)}
@@ -568,7 +549,7 @@
                 ${detailRow('Actions Taken', escapeHtml(row.actions_taken || '—'))}
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                     <div class="text-xs font-bold text-yellow-700 uppercase tracking-wide"><i class="fa-solid fa-lightbulb mr-1"></i> Recommended Actions</div>
-                    <div class="text-gray-700 dark:text-gray-300 mt-1">${escapeHtml(recommendation)}</div>
+                    <div class="text-gray-700 mt-1">${escapeHtml(recommendation)}</div>
                 </div>
             `;
             document.getElementById('viewModal').classList.remove('hidden');
@@ -588,12 +569,15 @@
             document.getElementById('edit_informed_by').value = row.informed_by || '';
             document.getElementById('edit_unit_no').value = row.unit_no || '';
             document.getElementById('edit_category').value = row.category || '';
-            document.getElementById('edit_job_status').value = row.job_status || 'Pending';
             document.getElementById('edit_nature_of_breakdown').value = row.nature_of_breakdown || '';
             document.getElementById('edit_attended_date').value = row.attended_date ? row.attended_date.split('T')[0] : '';
             document.getElementById('edit_attended_time').value = row.attended_time || '';
-            document.getElementById('edit_attended_by').value = row.attended_by || '';
             document.getElementById('edit_actions_taken').value = row.actions_taken || '';
+
+            const selectedTechs = (row.attended_by || '').split(' / ').map(t => t.trim());
+            document.querySelectorAll('.edit-tech-checkbox').forEach(cb => {
+                cb.checked = selectedTechs.includes(cb.value);
+            });
 
             document.getElementById('editModal').classList.remove('hidden');
         }
@@ -628,11 +612,13 @@
                 informed_by: document.getElementById('edit_informed_by').value.trim(),
                 unit_no: unitNo,
                 category: document.getElementById('edit_category').value,
-                job_status: document.getElementById('edit_job_status').value,
+                // No status picker here — filling in attended date/time/by and
+                // actions taken via this edit form means the job is done.
+                job_status: 'Job Done',
                 nature_of_breakdown: document.getElementById('edit_nature_of_breakdown').value.trim(),
                 attended_date: document.getElementById('edit_attended_date').value || null,
                 attended_time: document.getElementById('edit_attended_time').value || null,
-                attended_by: document.getElementById('edit_attended_by').value.trim(),
+                attended_by: Array.from(document.querySelectorAll('.edit-tech-checkbox:checked')).map(cb => cb.value).join(' / '),
                 actions_taken: document.getElementById('edit_actions_taken').value.trim()
             };
 

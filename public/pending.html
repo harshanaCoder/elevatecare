@@ -4,54 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Sync - ElevateCare</title>
-    <script>
-        // Applied before Tailwind paints anything, so there's no flash of the
-        // wrong theme on load. Toggle logic itself lives in js/theme.js.
-        (function () {
-            try {
-                var stored = localStorage.getItem('theme');
-                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                if (isDark) document.documentElement.classList.add('dark');
-            } catch (e) { /* ignore */ }
-        })();
-    </script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/theme.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+<body class="bg-gray-100 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/theme.js"></script>
     <script src="js/footer.js"></script>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Pending Mobile Submissions</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Pending Mobile Submissions</h1>
             <div class="flex flex-wrap gap-2">
                 <button onclick="addTestData()" class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg font-bold transition text-sm"><i class="fa-solid fa-plus"></i> Simulate Mobile Input</button>
-                <button onclick="loadPending()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg font-semibold transition text-sm"><i class="fa-solid fa-rotate-right"></i> Refresh Sync</button>
+                <button onclick="loadPending()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold transition text-sm"><i class="fa-solid fa-rotate-right"></i> Refresh Sync</button>
             </div>
         </div>
-        <p class="text-gray-500 dark:text-gray-400 mb-8">Review, edit, and approve breakdown data sent by technicians before saving to the main database.</p>
+        <p class="text-gray-500 mb-8">Review, edit, and approve breakdown data sent by technicians before saving to the main database.</p>
 
         <div id="pendingContainer" class="space-y-6">
             <!-- Dynamic Cards Will Load Here -->
-            <div class="text-center py-10 text-gray-500 dark:text-gray-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading pending data...</div>
+            <div class="text-center py-10 text-gray-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading pending data...</div>
         </div>
     </div>
 
     <script>
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
         async function loadPending() {
             const container = document.getElementById('pendingContainer');
             try {
-                const response = await fetch(`${API_BASE}/pending`);
+                const [response, techResponse, catResponse] = await Promise.all([
+                    fetch(`${API_BASE}/pending`),
+                    fetch(`${API_BASE}/technician-names`),
+                    fetch(`${API_BASE}/breakdown-types`)
+                ]);
                 const data = await response.json();
+                const technicians = techResponse.ok ? await techResponse.json() : [];
+                const breakdownTypes = catResponse.ok ? await catResponse.json() : [];
+                const categoryOptionsHtml = breakdownTypes.length
+                    ? breakdownTypes.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`).join('')
+                    : '<option value="">No breakdown types added yet</option>';
 
                 if (data.length === 0) {
-                    container.innerHTML = '<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm text-center text-gray-400 dark:text-gray-500 font-bold text-lg border border-gray-100 dark:border-gray-700"><i class="fa-solid fa-check-circle text-4xl text-green-400 mb-3 block"></i> No pending submissions. Everything is up to date!</div>';
+                    container.innerHTML = '<div class="bg-white p-8 rounded-xl shadow-sm text-center text-gray-400 font-bold text-lg border border-gray-100"><i class="fa-solid fa-check-circle text-4xl text-green-400 mb-3 block"></i> No pending submissions. Everything is up to date!</div>';
                     document.getElementById('badgeCount').classList.add('hidden');
                     return;
                 }
@@ -66,70 +66,73 @@
                     const informedDate = item.informed_date ? item.informed_date.split('T')[0] : '';
                     const attendedDate = item.attended_date ? item.attended_date.split('T')[0] : '';
 
-                    html += `
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-yellow-300 relative transition hover:shadow-md" id="card-${item.id}">
+                    const selectedTechs = (item.attended_by || '').split(' / ').map(t => t.trim());
+                    const techCheckboxesHtml = technicians.length
+                        ? technicians.map(t => `
+                            <label class="flex items-center space-x-2 mb-1 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="${escapeHtml(t.name)}" class="tech-checkbox w-4 h-4 text-blue-600 rounded" ${selectedTechs.includes(t.name) ? 'checked' : ''}> <span class="font-semibold text-gray-700 text-xs">${escapeHtml(t.name)}</span></label>
+                        `).join('')
+                        : '<p class="text-xs text-gray-400 p-1">No technicians added yet — add some from Settings.</p>';
+
+                    html += `<div class="bg-white p-6 rounded-xl shadow-sm border border-yellow-300 relative transition hover:shadow-md" id="card-${item.id}">
                         <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">Needs Review</div>
                         
                         <div class="flex flex-col md:flex-row gap-6 md:gap-8">
                             <!-- Photo Section -->
                             <div class="w-full sm:w-56 sm:mx-0 mx-auto flex flex-col gap-2">
-                                <div class="h-44 bg-gray-100 dark:bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden relative group cursor-pointer">
+                                <div class="h-44 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden relative group cursor-pointer">
                                     <i class="fa-solid fa-image text-5xl text-gray-300 group-hover:scale-110 transition duration-300"></i>
                                     <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
                                         <span class="text-white text-xs font-bold"><i class="fa-solid fa-magnifying-glass-plus mr-1"></i> View Photo</span>
                                     </div>
                                 </div>
-                                <p class="text-[11px] text-gray-400 dark:text-gray-500 text-center"><i class="fa-solid fa-camera mr-1"></i> Uploaded via Mobile App</p>
+                                <p class="text-[11px] text-gray-400 text-center"><i class="fa-solid fa-camera mr-1"></i> Uploaded via Mobile App</p>
                             </div>
                             
                             <!-- Editing Form -->
                             <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                                 
-                                <div><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Unit No</label>
+                                <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Unit No</label>
                                 <input type="text" id="unit-${item.id}" value="${item.unit_no || ''}" class="w-full border-b border-gray-300 bg-blue-50/50 p-1.5 outline-none text-sm font-bold text-blue-700 rounded-t"></div>
                                 
-                                <div><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Job Status</label>
-                                <select id="status-${item.id}" class="w-full border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm font-bold text-green-600 rounded-t">
+                                <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Job Status</label>
+                                <select id="status-${item.id}" class="w-full border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm font-bold text-green-600 rounded-t">
                                     <option value="Job Done" ${item.job_status === 'Job Done' ? 'selected' : ''}>Job Done</option>
                                     <option value="Pending" ${item.job_status === 'Pending' ? 'selected' : ''}>Pending</option>
                                 </select></div>
                                 
                                 <!-- Category added here for Main DB compatibility -->
-                                <div><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Category</label>
-                                <select id="cat-${item.id}" class="w-full border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm font-bold text-gray-700 dark:text-gray-300 rounded-t">
-                                    <option value="Minor Breakdown">Minor Breakdown</option>
-                                    <option value="Major Breakdown">Major Breakdown</option>
-                                    <option value="Door System Failure">Door System Failure</option>
-                                    <option value="Electrical Issue">Electrical Issue</option>
+                                <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Category</label>
+                                <select id="cat-${item.id}" class="w-full border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm font-bold text-gray-700 rounded-t">
+                                    ${categoryOptionsHtml}
                                 </select></div>
 
-                                <div><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Informed By</label>
-                                <input type="text" id="infby-${item.id}" value="${item.informed_by || ''}" class="w-full border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm font-semibold text-gray-800 dark:text-gray-100 rounded-t"></div>
+                                <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Informed By</label>
+                                <input type="text" id="infby-${item.id}" value="${item.informed_by || ''}" class="w-full border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm font-semibold text-gray-800 rounded-t"></div>
                                 
-                                <div class="col-span-2"><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Informed Date & Time</label>
+                                <div class="col-span-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Informed Date & Time</label>
                                 <div class="flex gap-2">
-                                    <input type="date" id="infdate-${item.id}" value="${informedDate}" class="border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm text-gray-700 dark:text-gray-300 w-1/2 rounded-t">
-                                    <input type="time" id="inftime-${item.id}" value="${item.informed_time || ''}" class="border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm text-gray-700 dark:text-gray-300 w-1/2 rounded-t">
+                                    <input type="date" id="infdate-${item.id}" value="${informedDate}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
+                                    <input type="time" id="inftime-${item.id}" value="${item.informed_time || ''}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
                                 </div></div>
 
-                                <div><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Attended By</label>
-                                <input type="text" id="attby-${item.id}" value="${item.attended_by || ''}" class="w-full border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm font-semibold text-gray-800 dark:text-gray-100 rounded-t"></div>
+                                <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Attended By (Select Technicians)</label>
+                                <div id="techbox-${item.id}" class="w-full border rounded p-1.5 text-sm bg-gray-50 h-24 overflow-y-auto border-gray-300 shadow-inner">${techCheckboxesHtml}</div></div>
                                 
-                                <div class="col-span-2"><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Attended Date & Time</label>
+                                <div class="col-span-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Attended Date & Time</label>
                                 <div class="flex gap-2">
-                                    <input type="date" id="attdate-${item.id}" value="${attendedDate}" class="border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm text-gray-700 dark:text-gray-300 w-1/2 rounded-t">
-                                    <input type="time" id="atttime-${item.id}" value="${item.attended_time || ''}" class="border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-1.5 outline-none text-sm text-gray-700 dark:text-gray-300 w-1/2 rounded-t">
+                                    <input type="date" id="attdate-${item.id}" value="${attendedDate}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
+                                    <input type="time" id="atttime-${item.id}" value="${item.attended_time || ''}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
                                 </div></div>
 
-                                <div class="col-span-3 mt-2"><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-red-500"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Nature of Breakdown (Raw Entry)</label>
+                                <div class="col-span-3 mt-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-red-500"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Nature of Breakdown (Raw Entry)</label>
                                 <input type="text" id="nature-${item.id}" value="${item.nature_of_breakdown || ''}" class="w-full border-b-2 border-yellow-400 bg-yellow-50 p-2 outline-none text-sm font-bold text-red-600 rounded-t"></div>
                                 
-                                <div class="col-span-3"><label class="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Action Taken</label>
-                                <input type="text" id="action-${item.id}" value="${item.actions_taken || ''}" class="w-full border-b border-gray-300 bg-gray-50 dark:bg-gray-900/40 p-2 outline-none text-sm font-semibold text-gray-800 dark:text-gray-100 rounded-t"></div>
+                                <div class="col-span-3"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Action Taken</label>
+                                <input type="text" id="action-${item.id}" value="${item.actions_taken || ''}" class="w-full border-b border-gray-300 bg-gray-50 p-2 outline-none text-sm font-semibold text-gray-800 rounded-t"></div>
                             </div>
                         </div>
 
-                        <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-gray-100">
                             <button onclick="discardItem(${item.id})" class="bg-red-50 text-red-600 px-5 py-2 rounded-lg font-bold hover:bg-red-100 transition"><i class="fa-solid fa-trash-can mr-1"></i> Discard</button>
                             <button onclick="approveItem(${item.id})" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 transition shadow-md whitespace-nowrap"><i class="fa-solid fa-database mr-2"></i> Approve & Save to DB</button>
                         </div>
@@ -151,7 +154,7 @@
                 informed_by: document.getElementById(`infby-${id}`).value,
                 informed_date: document.getElementById(`infdate-${id}`).value,
                 informed_time: document.getElementById(`inftime-${id}`).value,
-                attended_by: document.getElementById(`attby-${id}`).value,
+                attended_by: Array.from(document.querySelectorAll(`#techbox-${id} input:checked`)).map(cb => cb.value).join(' / '),
                 attended_date: document.getElementById(`attdate-${id}`).value,
                 attended_time: document.getElementById(`atttime-${id}`).value,
                 nature_of_breakdown: document.getElementById(`nature-${id}`).value,

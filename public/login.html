@@ -4,39 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - ElevateCare</title>
-    <script>
-        // Applied before Tailwind paints anything, so there's no flash of the
-        // wrong theme on load. Toggle logic itself lives in js/theme.js.
-        (function () {
-            try {
-                var stored = localStorage.getItem('theme');
-                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                if (isDark) document.documentElement.classList.add('dark');
-            } catch (e) { /* ignore */ }
-        })();
-    </script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/theme.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-sm mb-8">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-elevator text-blue-600"></i> ElevateCare</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-1 font-semibold">Sign in to the operations dashboard</p>
+            <h1 class="text-3xl font-bold text-gray-800"><i class="fa-solid fa-elevator text-blue-600"></i> ElevateCare</h1>
+            <p class="text-gray-500 mt-1 font-semibold">Sign in to the operations dashboard</p>
         </div>
 
-        <form id="loginForm" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-4">
+        <form id="loginForm" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Username</label>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Username</label>
                 <input type="text" id="username" required autofocus class="w-full border rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Password</label>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Password</label>
                 <div class="relative">
                     <input type="password" id="password" required class="w-full border rounded p-2.5 pr-10 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="button" id="togglePassword" tabindex="-1" class="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 text-base">
+                    <button type="button" id="togglePassword" tabindex="-1" class="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-gray-600 hover:text-blue-600 text-base">
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </div>
@@ -51,7 +39,6 @@
     </div>
 
     <script src="js/config.js"></script>
-    <script src="js/theme.js"></script>
     <script src="js/footer.js"></script>
     <script>
         // Where each role lands — keep in sync with landingPageFor() in

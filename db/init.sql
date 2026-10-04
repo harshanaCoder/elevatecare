@@ -43,14 +43,44 @@ CREATE TABLE IF NOT EXISTS unit_specifications (
     u_angle_cos      VARCHAR(50)
 );
 
-CREATE TABLE IF NOT EXISTS technicians (
-    id                   INT AUTO_INCREMENT PRIMARY KEY,
-    tech_code            VARCHAR(50),
-    name                 VARCHAR(255),
-    skills               VARCHAR(255),
-    status               VARCHAR(50) DEFAULT 'Available',
-    current_assignment   VARCHAR(255)
+-- Simple shared name list (managed from Settings) used to populate the
+-- "attended by" / "assign technician(s)" checkboxes on Breakdowns and
+-- Services. Not a full technician roster — just names.
+CREATE TABLE IF NOT EXISTS technician_names (
+    id    INT AUTO_INCREMENT PRIMARY KEY,
+    name  VARCHAR(100) NOT NULL UNIQUE
 );
+
+-- Seeded with the names that used to be hardcoded into the Breakdowns/Services
+-- checkboxes, so a fresh install starts with the same list already in use.
+INSERT IGNORE INTO technician_names (name) VALUES
+    ('Rifki'), ('Dias'), ('Tharusha'), ('Pathum'), ('Kamal'), ('Tharuka'),
+    ('Sadeepa'), ('Adhikari'), ('Minhaj'), ('Shehan'), ('Amos'), ('Ashen'),
+    ('Tharindu'), ('Wijerathne'), ('Sampath'), ('Somasiri'), ('Dc'),
+    ('Botheju'), ('Deshan'), ('Sachintha'), ('Janith');
+
+-- Shared name list (managed from Settings) for the "Breakdown Category"
+-- dropdown on Breakdowns, Pending and Reports.
+CREATE TABLE IF NOT EXISTS breakdown_types (
+    id    INT AUTO_INCREMENT PRIMARY KEY,
+    name  VARCHAR(100) NOT NULL UNIQUE
+);
+
+INSERT IGNORE INTO breakdown_types (name) VALUES
+    ('Door System Failure'), ('Minor Breakdown'), ('Electrical / Control Failure'),
+    ('Mechanical Failure'), ('Power Failure'), ('Communication Failure'),
+    ('Safety Error'), ('Major Breakdown'), ('Passenger Entrapment');
+
+-- Shared name list (managed from Settings) for the "Service Type" dropdown
+-- on Services.
+CREATE TABLE IF NOT EXISTS service_types (
+    id    INT AUTO_INCREMENT PRIMARY KEY,
+    name  VARCHAR(100) NOT NULL UNIQUE
+);
+
+INSERT IGNORE INTO service_types (name) VALUES
+    ('Routine Monthly Service'), ('Quarterly Checkup'), ('Annual Full Inspection'),
+    ('Oil & Lubrication'), ('Rope & Governor Check');
 
 CREATE TABLE IF NOT EXISTS pending_breakdowns (
     id                   INT AUTO_INCREMENT PRIMARY KEY,
@@ -80,5 +110,3 @@ CREATE INDEX idx_services_service_date ON services (service_date);
 CREATE INDEX idx_services_status       ON services (status);
 
 CREATE INDEX idx_pending_created_at ON pending_breakdowns (created_at);
-
-CREATE INDEX idx_technicians_status ON technicians (status);

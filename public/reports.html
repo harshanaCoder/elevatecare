@@ -4,99 +4,178 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics & Reports - ElevateCare</title>
-    <script>
-        // Applied before Tailwind paints anything, so there's no flash of the
-        // wrong theme on load. Toggle logic itself lives in js/theme.js.
-        (function () {
-            try {
-                var stored = localStorage.getItem('theme');
-                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                if (isDark) document.documentElement.classList.add('dark');
-            } catch (e) { /* ignore */ }
-        })();
-    </script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/theme.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+<body class="bg-gray-100 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/theme.js"></script>
     <script src="js/footer.js"></script>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
 
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Breakdown Analytics</h1>
-                <p class="text-gray-500 dark:text-gray-400">Analyze faults by time period, total counts, and category percentages.</p>
-            </div>
-            <button onclick="window.print()" class="bg-gray-800 hover:bg-black text-white font-semibold px-5 py-2.5 rounded-lg shadow flex items-center justify-center gap-2 transition">
-                <i class="fa-solid fa-print"></i> Print Report
-            </button>
+        <div class="mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Breakdown Analytics</h1>
+            <p class="text-gray-500">Analyze faults by building, lift type, category and time period.</p>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm mb-6 border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row flex-wrap gap-4 sm:items-end">
-            <div>
-                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">From Date</label>
-                <input type="date" id="fromDate" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-40 text-gray-700 dark:text-gray-300">
+        <!-- Filters -->
+        <div class="bg-white p-5 rounded-xl shadow-sm mb-4 border border-gray-100">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">From Date</label>
+                    <input type="date" id="fromDate" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">To Date</label>
+                    <input type="date" id="toDate" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Building</label>
+                    <select id="buildingFilter" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+                        <option value="">All Buildings</option>
+                        <option value="BD_01">BD_01</option>
+                        <option value="BD_02">BD_02</option>
+                        <option value="BD_03">BD_03</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Lift Type</label>
+                    <select id="liftTypeFilter" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+                        <option value="">All Types</option>
+                        <option value="PL">Passenger Lift (PL)</option>
+                        <option value="SL">Service Lift (SL)</option>
+                        <option value="FSL">Freight Service Lift (FSL)</option>
+                        <option value="ES">Escalator (ES)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Breakdown Type</label>
+                    <select id="categoryFilter" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Status</label>
+                    <select id="statusFilter" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Job Done">Job Done</option>
+                    </select>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">To Date</label>
-                <input type="date" id="toDate" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-40 text-gray-700 dark:text-gray-300">
+
+            <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+                <button onclick="applyFilters()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-filter"></i> Apply Filters
+                </button>
+                <button onclick="showThisMonth()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-calendar-day"></i> This Month
+                </button>
+                <button onclick="resetFilters()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate"></i> All Time / Reset
+                </button>
+                <div class="sm:ml-auto flex flex-wrap gap-2">
+                    <button onclick="downloadCSV()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-csv"></i> Download CSV
+                    </button>
+                    <button onclick="downloadPDF()" class="bg-gray-800 hover:bg-black text-white font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i> Download PDF
+                    </button>
+                </div>
             </div>
-            <button onclick="fetchFilteredData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition shadow-sm h-[38px] flex items-center justify-center gap-2">
-                <i class="fa-solid fa-chart-simple"></i> Generate Analytics
-            </button>
-            <button onclick="fetchLiveData()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300 font-bold px-4 py-2 rounded-lg transition shadow-sm h-[38px] flex items-center justify-center gap-2 sm:ml-auto">
-                <i class="fa-solid fa-rotate"></i> Show All Time Data
-            </button>
+        </div>
+
+        <div class="mb-6">
+            <span class="inline-flex items-center gap-2 bg-blue-100 text-blue-800 border border-blue-200 px-4 py-2 rounded-lg font-bold text-sm shadow-sm">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span id="periodLabel">Loading...</span>
+            </span>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Total Breakdowns</p>
+                <p id="statTotal" class="text-3xl font-black text-gray-800 mt-1">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Pending</p>
+                <p id="statPending" class="text-3xl font-black text-red-500 mt-1">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Job Done</p>
+                <p id="statDone" class="text-3xl font-black text-green-600 mt-1">0</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Avg Resolution Time</p>
+                <p id="statAvgRes" class="text-3xl font-black text-blue-600 mt-1">N/A</p>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 col-span-1 flex flex-col">
-                <h3 class="text-md font-bold text-gray-800 dark:text-gray-100 mb-4 border-b pb-2">Visual Breakdown Share</h3>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 col-span-1 flex flex-col">
+                <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Visual Breakdown Share</h3>
                 <div class="relative flex-1 w-full flex justify-center min-h-[300px]">
                     <canvas id="categoryChart"></canvas>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 col-span-1 lg:col-span-2">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 col-span-1 lg:col-span-2">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4 border-b pb-2">
-                    <h3 id="summaryTitle" class="text-md font-bold text-gray-800 dark:text-gray-100">Category Summary (All Time)</h3>
-                    <div class="bg-blue-100 text-blue-800 border border-blue-200 px-4 py-1.5 rounded-lg font-black text-sm shadow-sm flex items-center gap-2 self-start sm:self-auto">
-                        <i class="fa-solid fa-calculator"></i> Total Breakdowns: <span id="totalBreakdowns" class="text-lg">0</span>
-                    </div>
+                    <h3 class="text-md font-bold text-gray-800">Category Summary</h3>
                 </div>
                 <div id="categorySummaryGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 h-[300px] overflow-y-auto pr-2"></div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-x-auto">
-            <div class="p-4 bg-gray-50 dark:bg-gray-900/40 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="font-bold text-gray-700 dark:text-gray-300">Detailed Breakdown Log</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 col-span-1 lg:col-span-2 flex flex-col">
+                <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Breakdowns by Building</h3>
+                <div class="relative flex-1 w-full min-h-[260px]">
+                    <canvas id="buildingChart"></canvas>
+                </div>
             </div>
-            <table class="w-full text-left border-collapse min-w-[700px]">
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 col-span-1">
+                <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Most Frequent Units</h3>
+                <div id="topUnitsList" class="space-y-2 h-[260px] overflow-y-auto pr-2"></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <h3 class="font-bold text-gray-700">Detailed Breakdown Log</h3>
+            </div>
+            <table class="w-full text-left border-collapse min-w-[900px]">
                 <thead>
-                    <tr class="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                    <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b">
                         <th class="py-3 px-4 font-bold">Date & Time</th>
                         <th class="py-3 px-4 font-bold">Unit No</th>
+                        <th class="py-3 px-4 font-bold">Building</th>
+                        <th class="py-3 px-4 font-bold">Lift Type</th>
                         <th class="py-3 px-4 font-bold">Category</th>
                         <th class="py-3 px-4 font-bold">Nature of Breakdown</th>
-                        <th class="py-3 px-4 font-bold text-center">Attended By</th> </tr>
+                        <th class="py-3 px-4 font-bold text-center">Status</th>
+                        <th class="py-3 px-4 font-bold text-center">Attended By</th>
+                    </tr>
                 </thead>
-                <tbody id="breakdownLogTable" class="divide-y divide-gray-100 dark:divide-gray-700 text-sm text-gray-700 dark:text-gray-300"></tbody>
+                <tbody id="breakdownLogTable" class="divide-y divide-gray-100 text-sm text-gray-700"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        let myChart = null;
+        let categoryChartInstance = null;
+        let buildingChartInstance = null;
+        let allBreakdowns = [];
+        let currentFilteredData = [];
+        let currentPeriodLabel = 'All Time';
 
         const styleMap = {
             'Door System Failure': { border: 'border-red-500', text: 'text-red-500', bg: 'bg-red-100 text-red-700', hex: '#EF4444' },
@@ -106,44 +185,199 @@
             'Power Failure': { border: 'border-purple-500', text: 'text-purple-500', bg: 'bg-purple-100 text-purple-700', hex: '#8B5CF6' },
             'Communication Failure': { border: 'border-teal-500', text: 'text-teal-500', bg: 'bg-teal-100 text-teal-700', hex: '#14B8A6' },
             'Safety Error': { border: 'border-pink-500', text: 'text-pink-500', bg: 'bg-pink-100 text-pink-700', hex: '#EC4899' },
-            'Major Breakdown': { border: 'border-gray-500', text: 'text-gray-500 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300', hex: '#6B7280' },
-            'Passenger Entrapment': { border: 'border-gray-900', text: 'text-gray-900 dark:text-gray-100', bg: 'bg-gray-200 text-gray-900 dark:text-gray-100', hex: '#111827' },
+            'Major Breakdown': { border: 'border-gray-500', text: 'text-gray-500', bg: 'bg-gray-100 text-gray-700', hex: '#6B7280' },
+            'Passenger Entrapment': { border: 'border-gray-900', text: 'text-gray-900', bg: 'bg-gray-200 text-gray-900', hex: '#111827' },
             'Default': { border: 'border-blue-400', text: 'text-blue-400', bg: 'bg-blue-50 text-blue-600', hex: '#60A5FA' }
         };
 
-        async function fetchLiveData() {
-            document.getElementById('fromDate').value = '';
-            document.getElementById('toDate').value = '';
-            try {
-                const response = await fetch(`${API_BASE}/all-breakdowns`);
-                const data = await response.json();
-                processAndRenderData(data, "All Time");
-            } catch (error) { console.error("Error:", error); }
+        // Same building/category master data the Lifts and Breakdowns pages use
+        // for their dropdowns — the breakdowns table only stores unit_no as free
+        // text, so this is how Building/Lift Type get derived for filtering.
+        const liftData = {
+            "BD_01": {
+                "PL": ["PL 1.01", "PL 1.02", "PL 1.03", "PL 1.04", "PL 1.05", "PL 1.06", "PL 1.07", "PL 1.08"],
+                "SL": ["SL 1.01", "SL 1.02"],
+                "ES": ["ES 1.03a", "ES 1.03b", "ES 1.04a", "ES 1.04b"]
+            },
+            "BD_02": {
+                "PL": ["PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36"],
+                "SL": ["SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09"],
+                "FSL": ["FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08"],
+                "ES": ["ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"]
+            },
+            "BD_03": {
+                "PL": ["PL 3.01", "PL 3.02", "PL 3.03", "PL 3.04"],
+                "FSL": ["FSL 3.01", "FSL 3.02", "FSL 3.03", "FSL 3.04", "FSL 3.05", "FSL 3.06"],
+                "ES": ["ES 3.01a", "ES 3.01b", "ES 3.02a", "ES 3.02b", "ES 3.03a", "ES 3.03b"]
+            }
+        };
+
+        const BUILDING_COLORS = { 'BD_01': '#3B82F6', 'BD_02': '#F97316', 'BD_03': '#14B8A6', 'Unknown': '#9CA3AF' };
+        const LIFT_TYPE_LABELS = { PL: 'Passenger Lift (PL)', SL: 'Service Lift (SL)', FSL: 'Freight Service Lift (FSL)', ES: 'Escalator (ES)' };
+
+        // Reverse-lookup maps built once from liftData, so filtering/grouping
+        // by building or lift type doesn't need to re-scan liftData per row.
+        const unitToBuilding = {};
+        const unitToLiftType = {};
+        Object.entries(liftData).forEach(([building, categories]) => {
+            Object.entries(categories).forEach(([cat, units]) => {
+                units.forEach(u => { unitToBuilding[u] = building; unitToLiftType[u] = cat; });
+            });
+        });
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
-        async function fetchFilteredData() {
+        function toDateStr(d) {
+            if (!d) return '';
+            const dateObj = new Date(d);
+            return isNaN(dateObj) ? '' : dateObj.toISOString().split('T')[0];
+        }
+
+        // Hours between informed and attended timestamps — null if either is
+        // missing (e.g. still Pending), so it's excluded from the average.
+        function resolutionHours(row) {
+            if (!row.attended_date || !row.attended_time || !row.informed_date || !row.informed_time) return null;
+            const start = new Date(`${toDateStr(row.informed_date)}T${row.informed_time}`);
+            const end = new Date(`${toDateStr(row.attended_date)}T${row.attended_time}`);
+            const diff = (end - start) / (1000 * 60 * 60);
+            return (isFinite(diff) && diff >= 0) ? diff : null;
+        }
+
+        function formatAvgRes(hours) {
+            if (hours === null || hours === undefined) return 'N/A';
+            return hours < 48 ? `${hours.toFixed(1)}h` : `${(hours / 24).toFixed(1)}d`;
+        }
+
+        // Builds the YYYY-MM-DD strings directly from local year/month/day
+        // numbers — going via `new Date(...).toISOString()` here would shift
+        // the date by a day in any timezone ahead of UTC (local midnight
+        // becomes the previous day once converted to UTC).
+        function currentMonthRange() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth(); // 0-indexed
+            const lastDay = new Date(y, m + 1, 0).getDate();
+            const pad2 = n => String(n).padStart(2, '0');
+            return { from: `${y}-${pad2(m + 1)}-01`, to: `${y}-${pad2(m + 1)}-${pad2(lastDay)}` };
+        }
+
+        function formatDisplayDate(dateStr) {
+            return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Jumps straight back to the default view (this calendar month) —
+        // the quick alternative to manually picking From/To dates.
+        function showThisMonth() {
+            const { from, to } = currentMonthRange();
+            document.getElementById('fromDate').value = from;
+            document.getElementById('toDate').value = to;
+            applyFilters();
+        }
+
+        async function loadAllData() {
+            try {
+                const [response, catResponse] = await Promise.all([
+                    fetch(`${API_BASE}/all-breakdowns`),
+                    fetch(`${API_BASE}/breakdown-types`)
+                ]);
+                allBreakdowns = await response.json();
+                if (catResponse.ok) {
+                    const types = await catResponse.json();
+                    const select = document.getElementById('categoryFilter');
+                    select.insertAdjacentHTML('beforeend', types.map(t => `<option>${escapeHtml(t.name)}</option>`).join(''));
+                }
+                // Default view on first load: the current calendar month, not
+                // the whole history — "All Time / Reset" is the explicit way
+                // to see everything.
+                showThisMonth();
+            } catch (error) {
+                console.error('Error loading breakdowns:', error);
+                document.getElementById('breakdownLogTable').innerHTML = '<tr><td colspan="8" class="text-center py-6 text-red-500 font-bold">Failed to load breakdown data.</td></tr>';
+            }
+        }
+
+        function applyFilters() {
             const from = document.getElementById('fromDate').value;
             const to = document.getElementById('toDate').value;
-            if(!from || !to) { alert("Please select both From and To dates!"); return; }
-            try {
-                const response = await fetch(`${API_BASE}/breakdowns-filter?from=${from}&to=${to}`);
-                const data = await response.json();
-                processAndRenderData(data, `${from} to ${to}`);
-            } catch (error) { console.error("Error:", error); }
+            const building = document.getElementById('buildingFilter').value;
+            const liftType = document.getElementById('liftTypeFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            const filtered = allBreakdowns.filter(row => {
+                const d = toDateStr(row.informed_date);
+                if (from && d < from) return false;
+                if (to && d > to) return false;
+                if (building && unitToBuilding[row.unit_no] !== building) return false;
+                if (liftType && unitToLiftType[row.unit_no] !== liftType) return false;
+                if (category && row.category !== category) return false;
+                if (status && row.job_status !== status) return false;
+                return true;
+            });
+
+            const { from: monthFrom, to: monthTo } = currentMonthRange();
+            const labelParts = [];
+            if (!from && !to) {
+                labelParts.push('All Time');
+            } else if (from === monthFrom && to === monthTo) {
+                labelParts.push(`This Month (${new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })})`);
+            } else if (from && to) {
+                labelParts.push(`${formatDisplayDate(from)} – ${formatDisplayDate(to)}`);
+            } else {
+                labelParts.push(from ? `From ${formatDisplayDate(from)}` : `Up to ${formatDisplayDate(to)}`);
+            }
+            if (building) labelParts.push(building);
+            if (liftType) labelParts.push(LIFT_TYPE_LABELS[liftType]);
+            if (category) labelParts.push(category);
+            if (status) labelParts.push(status);
+            currentPeriodLabel = labelParts.join(' · ');
+
+            currentFilteredData = filtered;
+            renderAll(filtered);
         }
 
-        function processAndRenderData(data, periodText) {
-            document.getElementById('summaryTitle').textContent = `Category Summary (${periodText})`;
+        function resetFilters() {
+            document.getElementById('fromDate').value = '';
+            document.getElementById('toDate').value = '';
+            document.getElementById('buildingFilter').value = '';
+            document.getElementById('liftTypeFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            applyFilters();
+        }
+
+        function renderAll(data) {
+            document.getElementById('periodLabel').textContent = `Showing: ${currentPeriodLabel}`;
+
             const total = data.length;
-            document.getElementById('totalBreakdowns').textContent = total;
+            const pending = data.filter(r => r.job_status !== 'Job Done').length;
+            const done = total - pending;
+            const resTimes = data.map(resolutionHours).filter(h => h !== null);
+            const avgRes = resTimes.length ? resTimes.reduce((a, b) => a + b, 0) / resTimes.length : null;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statDone').textContent = done;
+            document.getElementById('statAvgRes').textContent = formatAvgRes(avgRes);
 
             if (total === 0) {
-                document.getElementById('categorySummaryGrid').innerHTML = '<div class="col-span-2 text-center py-10 text-gray-500 dark:text-gray-400 font-bold">No data found.</div>';
-                document.getElementById('breakdownLogTable').innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-500 dark:text-gray-400">No records found.</td></tr>';
-                if(myChart) myChart.destroy();
+                document.getElementById('categorySummaryGrid').innerHTML = '<div class="col-span-2 text-center py-10 text-gray-500 font-bold">No data found.</div>';
+                document.getElementById('topUnitsList').innerHTML = '<div class="text-center py-10 text-gray-400 font-bold">No data found.</div>';
+                document.getElementById('breakdownLogTable').innerHTML = '<tr><td colspan="8" class="text-center py-6 text-gray-500">No records found.</td></tr>';
+                if (categoryChartInstance) categoryChartInstance.destroy();
+                if (buildingChartInstance) buildingChartInstance.destroy();
                 return;
             }
 
+            renderCategorySummary(data, total);
+            renderBuildingChart(data);
+            renderTopUnits(data);
+            renderTable(data);
+        }
+
+        function renderCategorySummary(data, total) {
             const counts = {};
             data.forEach(item => { counts[item.category] = (counts[item.category] || 0) + 1; });
 
@@ -156,46 +390,90 @@
                 const style = styleMap[cat] || styleMap['Default'];
                 labels.push(cat); values.push(count); colors.push(style.hex);
 
-                gridHTML += `
-                    <div class="bg-gray-50 dark:bg-gray-900/40 border-l-4 ${style.border} p-3 rounded shadow-sm flex justify-between items-center">
+                gridHTML += `<div class="bg-gray-50 border-l-4 ${style.border} p-3 rounded shadow-sm flex justify-between items-center">
                         <div>
-                            <h4 class="font-bold text-gray-700 dark:text-gray-300 text-sm">${cat}</h4>
+                            <h4 class="font-bold text-gray-700 text-sm">${escapeHtml(cat)}</h4>
                             <p class="text-[11px] font-bold ${style.text} mt-0.5">${percentage}%</p>
                         </div>
-                        <div class="text-xl font-black text-gray-800 dark:text-gray-100">${count}</div>
+                        <div class="text-xl font-black text-gray-800">${count}</div>
                     </div>
                 `;
             });
             document.getElementById('categorySummaryGrid').innerHTML = gridHTML;
 
-            if (myChart) myChart.destroy();
-            myChart = new Chart(document.getElementById('categoryChart').getContext('2d'), {
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(document.getElementById('categoryChart').getContext('2d'), {
                 type: 'doughnut',
                 data: { labels: labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff' }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' }
             });
+        }
 
-            // ⚠️ POPULATE TABLE WITH ATTENDED BY COLUMN ⚠️
+        function renderBuildingChart(data) {
+            const counts = { BD_01: 0, BD_02: 0, BD_03: 0, Unknown: 0 };
+            data.forEach(row => {
+                const b = unitToBuilding[row.unit_no] || 'Unknown';
+                counts[b] = (counts[b] || 0) + 1;
+            });
+            const labels = Object.keys(counts).filter(b => counts[b] > 0);
+            const values = labels.map(b => counts[b]);
+            const colors = labels.map(b => BUILDING_COLORS[b] || '#9CA3AF');
+
+            if (buildingChartInstance) buildingChartInstance.destroy();
+            buildingChartInstance = new Chart(document.getElementById('buildingChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: 'Breakdowns', data: values, backgroundColor: colors, borderRadius: 4 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        function renderTopUnits(data) {
+            const counts = {};
+            data.forEach(row => { counts[row.unit_no] = (counts[row.unit_no] || 0) + 1; });
+            const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 8);
+
+            document.getElementById('topUnitsList').innerHTML = sorted.map((unit, i) => `
+                <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-black flex items-center justify-center">${i + 1}</span>
+                        <span class="font-bold text-gray-700 text-sm">${escapeHtml(unit)}</span>
+                        <span class="text-[11px] text-gray-400">${unitToBuilding[unit] || 'Unknown building'}</span>
+                    </div>
+                    <span class="text-sm font-black text-gray-800">${counts[unit]}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderTable(data) {
             let tableHTML = '';
             data.forEach(row => {
                 const style = styleMap[row.category] || styleMap['Default'];
-                const dateObj = new Date(row.informed_date);
-                const formattedDate = dateObj.toISOString().split('T')[0];
+                const building = unitToBuilding[row.unit_no] || '—';
+                const liftType = unitToLiftType[row.unit_no] ? LIFT_TYPE_LABELS[unitToLiftType[row.unit_no]] : '—';
+                const statusBadge = row.job_status === 'Job Done'
+                    ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Job Done</span>'
+                    : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold">Pending</span>';
 
-                tableHTML += `
-                    <tr class="hover:bg-gray-50 border-b">
+                tableHTML += `<tr class="hover:bg-gray-50 border-b">
                         <td class="py-3 px-4">
-                            <span class="font-semibold text-gray-800 dark:text-gray-100">${formattedDate}</span><br>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">${row.informed_time}</span>
+                            <span class="font-semibold text-gray-800">${toDateStr(row.informed_date)}</span><br>
+                            <span class="text-xs text-gray-500">${escapeHtml(row.informed_time)}</span>
                         </td>
-                        <td class="py-3 px-4 font-bold text-blue-600">${row.unit_no}</td>
-                        <td class="py-3 px-4"><span class="${style.bg} px-2 py-1 rounded text-xs font-bold">${row.category}</span></td>
+                        <td class="py-3 px-4 font-bold text-blue-600">${escapeHtml(row.unit_no)}</td>
+                        <td class="py-3 px-4 text-xs font-semibold text-gray-600">${building}</td>
+                        <td class="py-3 px-4 text-xs font-semibold text-gray-600">${liftType}</td>
+                        <td class="py-3 px-4"><span class="${style.bg} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span></td>
                         <td class="py-3 px-4">
-                            <span class="block text-gray-800 dark:text-gray-100">${row.nature_of_breakdown}</span>
-                            <span class="block text-xs text-green-600 mt-1"><i class="fa-solid fa-wrench"></i> Action: ${row.actions_taken || 'Pending'}</span>
+                            <span class="block text-gray-800">${escapeHtml(row.nature_of_breakdown)}</span>
+                            <span class="block text-xs text-green-600 mt-1"><i class="fa-solid fa-wrench"></i> Action: ${escapeHtml(row.actions_taken || 'Pending')}</span>
                         </td>
-                        <td class="py-3 px-4 text-center font-semibold text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40/50">
-                            ${row.attended_by ? `<span class="bg-gray-200/80 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs border border-gray-300 shadow-sm inline-block"><i class="fa-solid fa-user-gear text-gray-500 dark:text-gray-400 mr-1"></i>${row.attended_by}</span>` : '<span class="text-xs text-red-500 font-bold"><i class="fa-solid fa-circle-minus mr-1"></i>Not Assigned</span>'}
+                        <td class="py-3 px-4 text-center">${statusBadge}</td>
+                        <td class="py-3 px-4 text-center font-semibold text-gray-600 bg-gray-50">
+                            ${row.attended_by ? `<span class="bg-gray-200/80 text-gray-700 px-2 py-1 rounded text-xs border border-gray-300 shadow-sm inline-block"><i class="fa-solid fa-user-gear text-gray-500 mr-1"></i>${escapeHtml(row.attended_by)}</span>` : '<span class="text-xs text-red-500 font-bold"><i class="fa-solid fa-circle-minus mr-1"></i>Not Assigned</span>'}
                         </td>
                     </tr>
                 `;
@@ -203,7 +481,74 @@
             document.getElementById('breakdownLogTable').innerHTML = tableHTML;
         }
 
-        window.onload = fetchLiveData;
+        function csvEscape(val) {
+            const s = String(val ?? '');
+            return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        }
+
+        function downloadCSV() {
+            if (!currentFilteredData.length) { alert('No data to export for the current filters.'); return; }
+
+            const headers = ['Date', 'Time', 'Unit No', 'Building', 'Lift Type', 'Category', 'Nature of Breakdown', 'Status', 'Attended By', 'Actions Taken'];
+            const rows = currentFilteredData.map(row => [
+                toDateStr(row.informed_date), row.informed_time || '', row.unit_no,
+                unitToBuilding[row.unit_no] || '', unitToLiftType[row.unit_no] ? LIFT_TYPE_LABELS[unitToLiftType[row.unit_no]] : '',
+                row.category, row.nature_of_breakdown || '', row.job_status,
+                row.attended_by || '', row.actions_taken || ''
+            ]);
+
+            const csvContent = [headers, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
+            const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ElevateCare_Breakdown_Report_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPDF() {
+            if (!currentFilteredData.length) { alert('No data to export for the current filters.'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            doc.setFontSize(16);
+            doc.text('ElevateCare - Breakdown Report', 14, 15);
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.text(`Period: ${currentPeriodLabel}`, 14, 21);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
+
+            const total = currentFilteredData.length;
+            const pending = currentFilteredData.filter(r => r.job_status !== 'Job Done').length;
+            const done = total - pending;
+            const resTimes = currentFilteredData.map(resolutionHours).filter(h => h !== null);
+            const avgRes = resTimes.length ? resTimes.reduce((a, b) => a + b, 0) / resTimes.length : null;
+
+            doc.setFontSize(10);
+            doc.setTextColor(30);
+            doc.text(`Total: ${total}    Pending: ${pending}    Job Done: ${done}    Avg Resolution: ${formatAvgRes(avgRes)}`, 14, 33);
+
+            doc.autoTable({
+                startY: 38,
+                head: [['Date', 'Time', 'Unit No', 'Building', 'Lift Type', 'Category', 'Nature of Breakdown', 'Status', 'Attended By']],
+                body: currentFilteredData.map(row => [
+                    toDateStr(row.informed_date), row.informed_time || '', row.unit_no,
+                    unitToBuilding[row.unit_no] || '-', unitToLiftType[row.unit_no] ? LIFT_TYPE_LABELS[unitToLiftType[row.unit_no]] : '-',
+                    row.category, row.nature_of_breakdown || '', row.job_status, row.attended_by || '-'
+                ]),
+                styles: { fontSize: 7, cellPadding: 2 },
+                headStyles: { fillColor: [37, 99, 235] },
+                alternateRowStyles: { fillColor: [245, 247, 250] }
+            });
+
+            doc.save(`ElevateCare_Breakdown_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        window.onload = loadAllData;
     </script>
 </body>
 </html>

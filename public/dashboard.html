@@ -4,85 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ElevateCare</title>
-    <script>
-        // Applied before Tailwind paints anything, so there's no flash of the
-        // wrong theme on load. Toggle logic itself lives in js/theme.js.
-        (function () {
-            try {
-                var stored = localStorage.getItem('theme');
-                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                if (isDark) document.documentElement.classList.add('dark');
-            } catch (e) { /* ignore */ }
-        })();
-    </script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/theme.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+<body class="bg-gray-100 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/theme.js"></script>
     <script src="js/footer.js"></script>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
 
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-black text-gray-800 dark:text-gray-100">Welcome back, Admin! 👋</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-1 font-semibold">Real-time control panel for ElevateCare Operations.</p>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-800">Welcome back, Admin! 👋</h1>
+                <p class="text-gray-500 mt-1 font-semibold">Real-time control panel for ElevateCare Operations.</p>
             </div>
             <div class="sm:text-right">
-                <p id="currentDate" class="text-lg font-bold text-blue-600 dark:text-blue-400">...</p>
-                <p id="currentTime" class="text-sm font-semibold text-gray-500 dark:text-gray-400">...</p>
+                <p id="currentDate" class="text-lg font-bold text-blue-600">...</p>
+                <p id="currentTime" class="text-sm font-semibold text-gray-500">...</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center transition hover:shadow-md border-l-4 border-l-red-500">
-                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xl mr-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center transition hover:shadow-md border-l-4 border-l-blue-500">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl mr-4"><i class="fa-solid fa-stopwatch"></i></div>
                 <div>
-                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Pending Jobs</p>
-                    <p id="stat-pending" class="text-3xl font-black text-gray-800 dark:text-gray-100">...</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">Avg Resolution Time</p>
+                    <p id="stat-avgres" class="text-3xl font-black text-gray-800">...</p>
                 </div>
             </div>
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center transition hover:shadow-md border-l-4 border-l-green-500">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center transition hover:shadow-md border-l-4 border-l-green-500">
                 <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl mr-4"><i class="fa-solid fa-check-double"></i></div>
                 <div>
-                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Completed Jobs</p>
-                    <p id="stat-completed" class="text-3xl font-black text-gray-800 dark:text-gray-100">...</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">Completed Jobs</p>
+                    <p id="stat-completed" class="text-3xl font-black text-gray-800">...</p>
                 </div>
             </div>
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center transition hover:shadow-md border-l-4 border-l-orange-500">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center transition hover:shadow-md border-l-4 border-l-orange-500">
                 <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl mr-4"><i class="fa-solid fa-calendar-xmark"></i></div>
                 <div>
-                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Missed Services (Month)</p>
-                    <p class="text-3xl font-black text-gray-800 dark:text-gray-100 text-orange-600">02</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">Missed Services (Month)</p>
+                    <p class="text-3xl font-black text-gray-800 text-orange-600">02</p>
                 </div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             
-            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 col-span-1 flex flex-col h-[350px]">
-                <h3 class="text-md font-bold text-gray-800 dark:text-gray-100 mb-3 border-b pb-2"><i class="fa-solid fa-calendar-day text-orange-500 mr-2"></i>Today's Services</h3>
-                <div id="todaysServicesList" class="flex-1 overflow-y-auto space-y-3 pr-1 text-sm">
-                    <div class="text-center py-8 text-gray-400 dark:text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 col-span-1 overflow-hidden flex flex-col h-[350px]">
+                <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="text-md font-bold text-gray-800"><i class="fa-solid fa-calendar-day text-orange-500 mr-2"></i>Services (Next 7 Days)</h3>
+                    <a href="services.html" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> New
+                    </a>
+                </div>
+                <div id="todaysServicesList" class="flex-1 overflow-y-auto space-y-2 p-3 text-sm">
+                    <div class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 col-span-2 overflow-hidden flex flex-col h-[350px]">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 flex justify-between items-center">
-                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Pending Breakdowns</h3>
-                    <a href="breakdowns.html" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
-                        View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                    </a>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 col-span-2 overflow-hidden flex flex-col h-[350px]">
+                <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="text-md font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Pending Breakdowns <span id="pendingCount" class="text-gray-400 font-normal"></span></h3>
+                    <div class="flex items-center gap-2">
+                        <a href="breakdowns.html" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
+                            <i class="fa-solid fa-plus text-[10px]"></i> New
+                        </a>
+                        <a href="breakdowns.html" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
+                            View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    </div>
                 </div>
-                <div id="pendingBreakdownsList" class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
-                    <div class="text-center py-8 text-gray-400 dark:text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>
+                <div id="pendingBreakdownsList" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>
                 </div>
             </div>
 
@@ -102,17 +99,65 @@
                 const response = await fetch(`${API_BASE}/all-breakdowns`);
                 const data = await response.json();
 
-                const pendingJobs = data.filter(item => item.job_status === 'Pending').length;
+                const pendingItems = data.filter(item => item.job_status === 'Pending');
                 const completedJobs = data.filter(item => item.job_status === 'Job Done').length;
+                const resTimes = data.map(resolutionHours).filter(h => h !== null);
+                const avgRes = resTimes.length ? resTimes.reduce((a, b) => a + b, 0) / resTimes.length : null;
 
-                document.getElementById('stat-pending').textContent = pendingJobs;
+                document.getElementById('stat-avgres').textContent = formatAvgRes(avgRes);
                 document.getElementById('stat-completed').textContent = completedJobs;
+                document.getElementById('pendingCount').textContent = `(${pendingItems.length})`;
 
-                renderPendingBreakdownsWidget(data.filter(item => item.job_status === 'Pending'));
+                renderPendingBreakdownsWidget(pendingItems);
 
             } catch (error) {
                 console.error("Error:", error);
             }
+        }
+
+        // Safe date-string helpers — going via `new Date(...).toISOString()`
+        // on a LOCALLY-constructed date shifts by a day in any timezone ahead
+        // of UTC, so "today" is built from local Y/M/D numbers directly, and
+        // "days between" compares two YYYY-MM-DD strings as plain calendar
+        // dates rather than via a timezone-sensitive Date object.
+        function pad2(n) { return String(n).padStart(2, '0'); }
+        function localTodayStr() {
+            const now = new Date();
+            return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+        }
+        function toDateStr(d) {
+            if (!d) return '';
+            const dateObj = new Date(d);
+            return isNaN(dateObj) ? '' : dateObj.toISOString().split('T')[0];
+        }
+        function daysBetween(fromStr, toStr) {
+            const [ay, am, ad] = fromStr.split('-').map(Number);
+            const [by, bm, bd] = toStr.split('-').map(Number);
+            return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86400000);
+        }
+
+        // Same MTTR calculation Reports uses — hours between informed and
+        // attended timestamps, null (excluded from the average) if either is
+        // missing, e.g. still Pending.
+        function resolutionHours(row) {
+            if (!row.attended_date || !row.attended_time || !row.informed_date || !row.informed_time) return null;
+            const start = new Date(`${toDateStr(row.informed_date)}T${row.informed_time}`);
+            const end = new Date(`${toDateStr(row.attended_date)}T${row.attended_time}`);
+            const diff = (end - start) / (1000 * 60 * 60);
+            return (isFinite(diff) && diff >= 0) ? diff : null;
+        }
+        function formatAvgRes(hours) {
+            if (hours === null || hours === undefined) return 'N/A';
+            return hours < 48 ? `${hours.toFixed(1)}h` : `${(hours / 24).toFixed(1)}d`;
+        }
+
+        // Work-order aging badge — how long a breakdown has been sitting open,
+        // color-coded so the ones needing urgent attention stand out at a glance.
+        function agingBadge(informedDate) {
+            const days = daysBetween(toDateStr(informedDate), localTodayStr());
+            const style = days >= 5 ? 'bg-red-100 text-red-700' : days >= 2 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600';
+            const label = days <= 0 ? 'Today' : days === 1 ? '1 day open' : `${days} days open`;
+            return `<span class="${style} text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap">${label}</span>`;
         }
 
         // Reuses the same /all-breakdowns fetch loadDashboardData() already
@@ -122,19 +167,23 @@
             const container = document.getElementById('pendingBreakdownsList');
 
             if (pendingItems.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No pending breakdowns — everything is fixed!</div>';
+                container.innerHTML = '<div class="text-center py-8 text-gray-400 font-bold">No pending breakdowns — everything is fixed!</div>';
                 return;
             }
 
-            container.innerHTML = pendingItems.slice(0, 5).map(row => {
-                const dateObj = new Date(row.informed_date);
-                const formattedDate = isNaN(dateObj) ? row.informed_date : dateObj.toISOString().split('T')[0];
+            // Oldest-first — the ones that have been open longest surface at
+            // the top of this short list, not just whatever the API happened
+            // to return last.
+            const sorted = [...pendingItems].sort((a, b) => toDateStr(a.informed_date).localeCompare(toDateStr(b.informed_date)));
 
-                return `
-                    <div class="p-3 flex justify-between items-center hover:bg-gray-50">
+            container.innerHTML = sorted.slice(0, 5).map(row => {
+                const formattedDate = toDateStr(row.informed_date) || row.informed_date;
+
+                return `<div class="p-3 flex justify-between items-center hover:bg-gray-50">
                         <div>
                             <span class="font-black text-blue-600 block">${row.unit_no}</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold">${row.category} &middot; Informed ${formattedDate}</span>
+                            <span class="text-xs text-gray-500 font-semibold">${row.category} &middot; Informed ${formattedDate}</span>
+                            <span class="block mt-1">${agingBadge(row.informed_date)}</span>
                         </div>
                         <button onclick="markJobAsDone(${row.id}, '${row.unit_no}')" class="bg-red-500 hover:bg-red-600 text-white font-bold px-2.5 py-1 rounded shadow-sm text-[10px] uppercase transition flex items-center gap-1">
                             <i class="fa-solid fa-clock"></i> Pending
@@ -144,45 +193,53 @@
             }).join('');
         }
 
-        async function loadTodaysServices() {
+        async function loadUpcomingServices() {
             const container = document.getElementById('todaysServicesList');
             try {
                 const response = await fetch(`${API_BASE}/services`);
                 const data = await response.json();
-                const today = new Date().toISOString().split('T')[0];
+                const today = localTodayStr();
+                const [y, m, d] = today.split('-').map(Number);
+                const weekAhead = new Date(Date.UTC(y, m - 1, d) + 7 * 86400000).toISOString().split('T')[0];
 
-                const todaysServices = data.filter(row => {
-                    const dateObj = new Date(row.service_date);
-                    const rowDate = isNaN(dateObj) ? row.service_date : dateObj.toISOString().split('T')[0];
-                    return rowDate === today;
+                const scheduled = data.filter(row => row.status !== 'Completed');
+                const overdue = scheduled.filter(row => toDateStr(row.service_date) < today);
+                const upcoming = scheduled.filter(row => {
+                    const d2 = toDateStr(row.service_date);
+                    return d2 >= today && d2 <= weekAhead;
                 });
 
-                if (todaysServices.length === 0) {
-                    container.innerHTML = '<div class="text-center py-8 text-gray-400 dark:text-gray-500 font-bold">No services scheduled for today.</div>';
+                if (overdue.length === 0 && upcoming.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-400 font-bold">Nothing due in the next 7 days.</div>';
                     return;
                 }
 
-                container.innerHTML = todaysServices.map(row => {
-                    const isDone = row.status === 'Completed';
-                    const cardStyle = isDone ? 'bg-green-50/60 border-green-100' : 'bg-blue-50/60 border-blue-100';
-                    const unitStyle = isDone ? 'text-green-700' : 'text-blue-700';
-                    const badge = isDone
-                        ? '<span class="bg-green-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-check mr-1"></i>Done</span>'
+                const renderRow = (row, isOverdue) => {
+                    const cardStyle = isOverdue ? 'bg-red-50/60 border-red-100' : 'bg-blue-50/60 border-blue-100';
+                    const unitStyle = isOverdue ? 'text-red-700' : 'text-blue-700';
+                    const badge = isOverdue
+                        ? '<span class="bg-red-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Overdue</span>'
                         : `<span class="bg-blue-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-user-wrench mr-1"></i>${row.technicians || 'Unassigned'}</span>`;
 
-                    return `
-                        <div class="p-3 ${cardStyle} rounded-lg border flex justify-between items-start">
+                    return `<div class="p-3 ${cardStyle} rounded-lg border flex justify-between items-start">
                             <div>
                                 <span class="font-black ${unitStyle} block">${row.unit_no}</span>
-                                <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold">${row.service_type}</span>
+                                <span class="text-xs text-gray-500 font-semibold">${row.service_type} &middot; ${toDateStr(row.service_date)}</span>
                             </div>
                             ${badge}
                         </div>
                     `;
-                }).join('');
+                };
+
+                overdue.sort((a, b) => toDateStr(a.service_date).localeCompare(toDateStr(b.service_date)));
+                upcoming.sort((a, b) => toDateStr(a.service_date).localeCompare(toDateStr(b.service_date)));
+
+                container.innerHTML =
+                    overdue.map(row => renderRow(row, true)).join('') +
+                    upcoming.map(row => renderRow(row, false)).join('');
             } catch (error) {
-                console.error("Error fetching today's services:", error);
-                container.innerHTML = '<div class="text-center py-8 text-red-400 font-bold">Failed to load today\'s services.</div>';
+                console.error('Error fetching upcoming services:', error);
+                container.innerHTML = '<div class="text-center py-8 text-red-400 font-bold">Failed to load upcoming services.</div>';
             }
         }
 
@@ -220,7 +277,7 @@
 
         window.onload = function () {
             loadDashboardData();
-            loadTodaysServices();
+            loadUpcomingServices();
         };
     </script>
 </body>

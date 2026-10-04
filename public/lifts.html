@@ -4,41 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unit Management - ElevateCare</title>
-    <script>
-        // Applied before Tailwind paints anything, so there's no flash of the
-        // wrong theme on load. Toggle logic itself lives in js/theme.js.
-        (function () {
-            try {
-                var stored = localStorage.getItem('theme');
-                var isDark = stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                if (isDark) document.documentElement.classList.add('dark');
-            } catch (e) { /* ignore */ }
-        })();
-    </script>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/theme.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
+<body class="bg-gray-100 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
 
     <!-- Sidebar -->
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
     <script src="js/sidebar.js"></script>
-    <script src="js/theme.js"></script>
     <script src="js/footer.js"></script>
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
 
         <!-- Top Selection Bar -->
-        <div class="bg-white dark:bg-gray-800 shadow-sm z-0 relative px-4 sm:px-8 py-6 border-b border-gray-200 dark:border-gray-700">
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Elevator & Escalator Details</h1>
+        <div class="bg-white shadow-sm z-0 relative px-4 sm:px-8 py-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Elevator & Escalator Details</h1>
 
             <div class="flex flex-col sm:flex-row gap-4 sm:items-end">
                 <div class="flex-1">
-                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">1. Select Building</label>
-                    <select id="buildingSelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">1. Select Building</label>
+                    <select id="buildingSelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 bg-gray-50">
                         <option value="">-- Choose Building --</option>
                         <option value="BD_01">BD_01 </option>
                         <option value="BD_02">BD_02 </option>
@@ -46,8 +33,8 @@
                     </select>
                 </div>
                 <div class="flex-1">
-                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">2. Select Category</label>
-                    <select id="categorySelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/40" disabled>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">2. Select Category</label>
+                    <select id="categorySelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 bg-gray-50" disabled>
                         <option value="">-- Choose Category --</option>
                         <option value="PL">Passenger Lift (PL)</option>
                         <option value="SL">Service Lift (SL)</option>
@@ -56,7 +43,7 @@
                     </select>
                 </div>
                 <div class="flex-1">
-                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">3. Select Unit No</label>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">3. Select Unit No</label>
                     <select id="unitSelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-700 bg-blue-50 border-blue-200" disabled>
                         <option value="">-- Choose Unit --</option>
                     </select>
@@ -70,8 +57,8 @@
         </div>
 
         <!-- Details Container -->
-        <div id="detailsContainer" class="flex-1 overflow-y-auto p-4 sm:p-8 pb-12 bg-gray-100 dark:bg-gray-900 hidden">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div id="detailsContainer" class="flex-1 overflow-y-auto p-4 sm:p-8 pb-12 bg-gray-100 hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 
                 <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-6 text-white flex justify-between items-center">
                     <div>
@@ -83,14 +70,14 @@
                     </div>
                 </div>
 
-                <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-4 sm:px-6 pt-4 gap-4 sm:gap-6 overflow-x-auto">
+                <div class="flex border-b border-gray-200 bg-gray-50 px-4 sm:px-6 pt-4 gap-4 sm:gap-6 overflow-x-auto">
                     <button onclick="switchTab('details')" id="tab-details" class="tab-btn pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">
                         <i class="fa-solid fa-circle-info mr-1"></i> Unit Details
                     </button>
-                    <button onclick="switchTab('breakdown')" id="tab-breakdown" class="tab-btn pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-800 whitespace-nowrap">
+                    <button onclick="switchTab('breakdown')" id="tab-breakdown" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800 whitespace-nowrap">
                         <i class="fa-solid fa-triangle-exclamation mr-1"></i> Breakdown History
                     </button>
-                    <button onclick="switchTab('service')" id="tab-service" class="tab-btn pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-800 whitespace-nowrap">
+                    <button onclick="switchTab('service')" id="tab-service" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800 whitespace-nowrap">
                         <i class="fa-solid fa-screwdriver-wrench mr-1"></i> Service History
                     </button>
                 </div>
@@ -99,18 +86,18 @@
 
                     <!-- TAB 1: Specs -->
                     <div id="content-details" class="tab-content block">
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 border-b pb-2">Technical Specifications</h3>
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Technical Specifications</h3>
                         <form id="specsForm" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div><label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Motor Details</label><input type="text" id="spec_motor" placeholder="e.g. Gearless Traction 15kW" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-900/40"></div>
-                            <div><label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Controller Type</label><input type="text" id="spec_controller" placeholder="e.g. Monarch NICE3000+" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-900/40"></div>
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Motor Details</label><input type="text" id="spec_motor" placeholder="e.g. Gearless Traction 15kW" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Controller Type</label><input type="text" id="spec_controller" placeholder="e.g. Monarch NICE3000+" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
 
-                            <div><label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">ELD Type (Emergency Lowering)</label><input type="text" id="spec_eld" placeholder="e.g. ARD-220V" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-900/40"></div>
-                            <div><label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">ELD Battery Specification</label><input type="text" id="spec_battery" placeholder="e.g. 12V 7Ah x 4" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-900/40"></div>
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">ELD Type (Emergency Lowering)</label><input type="text" id="spec_eld" placeholder="e.g. ARD-220V" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
+                            <div><label class="block text-sm font-bold text-gray-700 mb-1">ELD Battery Specification</label><input type="text" id="spec_battery" placeholder="e.g. 12V 7Ah x 4" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"></div>
 
                             <div id="uAngleSection" class="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div class="col-span-1 sm:col-span-2 mt-2"><h4 class="font-bold text-gray-700 dark:text-gray-300 border-b pb-1">U-Angle Details (For Lifts Only)</h4></div>
-                                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">U-Angle (Sin Value)</label><input type="text" id="spec_sin" placeholder="0.000" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-900/40 font-mono"></div>
-                                <div><label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">U-Angle (Cos Value)</label><input type="text" id="spec_cos" placeholder="0.000" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-900/40 font-mono"></div>
+                                <div class="col-span-1 sm:col-span-2 mt-2"><h4 class="font-bold text-gray-700 border-b pb-1">U-Angle Details (For Lifts Only)</h4></div>
+                                <div><label class="block text-xs font-bold text-gray-500 mb-1">U-Angle (Sin Value)</label><input type="text" id="spec_sin" placeholder="0.000" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-mono"></div>
+                                <div><label class="block text-xs font-bold text-gray-500 mb-1">U-Angle (Cos Value)</label><input type="text" id="spec_cos" placeholder="0.000" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 font-mono"></div>
                             </div>
 
                             <div class="col-span-1 sm:col-span-2 flex flex-col sm:flex-row sm:justify-end mt-4 items-stretch sm:items-center gap-4">
@@ -122,9 +109,9 @@
 
                     <!-- TAB 2: Breakdowns -->
                     <div id="content-breakdown" class="tab-content hidden overflow-x-auto">
-                        <table class="w-full text-left border-collapse border border-gray-200 dark:border-gray-700 min-w-[640px]">
+                        <table class="w-full text-left border-collapse border border-gray-200 min-w-[640px]">
                             <thead>
-                                <tr class="bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b">
                                     <th class="py-3 px-4">Date & Time</th>
                                     <th class="py-3 px-4">Category</th>
                                     <th class="py-3 px-4">Issue Details</th>
@@ -141,9 +128,9 @@
 
                     <!-- TAB 3: Services -->
                     <div id="content-service" class="tab-content hidden overflow-x-auto">
-                        <table class="w-full text-left border-collapse border border-gray-200 dark:border-gray-700 mt-2 min-w-[560px]">
+                        <table class="w-full text-left border-collapse border border-gray-200 mt-2 min-w-[560px]">
                             <thead>
-                                <tr class="bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider border-b">
+                                <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b">
                                     <th class="py-3 px-4">Completed Date (Actual)</th>
                                     <th class="py-3 px-4">Service Type</th>
                                     <th class="py-3 px-4">Attended Technicians</th>
@@ -163,16 +150,16 @@
 
     <!-- 📸 Photo Viewer Modal -->
     <div id="photoModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-[450px]">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-[450px]">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100"><i class="fa-solid fa-camera-retro text-blue-500 mr-2"></i> Breakdown Photos</h3>
-                <button onclick="closePhotoModal()" class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-camera-retro text-blue-500 mr-2"></i> Breakdown Photos</h3>
+                <button onclick="closePhotoModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="grid grid-cols-2 gap-3" id="modalPhotoContainer">
-                <div class="bg-gray-100 dark:bg-gray-900 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 dark:text-gray-500 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 1</div>
-                <div class="bg-gray-100 dark:bg-gray-900 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 dark:text-gray-500 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 2</div>
+                <div class="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 1</div>
+                <div class="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 2</div>
             </div>
-            <p class="text-xs text-center text-gray-400 dark:text-gray-500 mt-4 font-semibold">Photos uploaded via ElevateCare Mobile App.</p>
+            <p class="text-xs text-center text-gray-400 mt-4 font-semibold">Photos uploaded via ElevateCare Mobile App.</p>
         </div>
     </div>
 
@@ -271,11 +258,11 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
             document.querySelectorAll('.tab-btn').forEach(el => {
                 el.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-                el.classList.add('text-gray-500 dark:text-gray-400');
+                el.classList.add('text-gray-500');
             });
             document.getElementById('content-' + tabName).classList.remove('hidden');
             document.getElementById('content-' + tabName).classList.add('block');
-            document.getElementById('tab-' + tabName).classList.remove('text-gray-500 dark:text-gray-400');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500');
             document.getElementById('tab-' + tabName).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
         }
 
@@ -306,27 +293,26 @@
         // --- Load Breakdowns ---
         async function loadBreakdownHistory(unitNo) {
             const tableBody = document.getElementById('breakdownTableBody');
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500 dark:text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
             try {
                 const response = await fetch(`${API_BASE}/breakdowns/${encodeURIComponent(unitNo)}`);
                 const data = await response.json();
                 updateUnitStatusBadge(data);
-                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500 dark:text-gray-400 font-bold">No breakdowns recorded.</td></tr>'; return; }
+                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500 font-bold">No breakdowns recorded.</td></tr>'; return; }
 
                 let rows = '';
                 data.forEach(row => {
-                    let catColor = 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300';
+                    let catColor = 'bg-gray-100 text-gray-700';
                     if(row.category.includes('Door')) catColor = 'bg-red-100 text-red-700';
                     else if(row.category.includes('Minor')) catColor = 'bg-yellow-100 text-yellow-700';
                     else catColor = 'bg-blue-100 text-blue-700';
 
                     const formattedDate = new Date(row.informed_date).toISOString().split('T')[0];
-                    rows += `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-3 px-4 font-bold text-gray-700 dark:text-gray-300">${formattedDate} <br><span class="text-xs font-normal text-gray-500 dark:text-gray-400">${row.informed_time}</span></td>
+                    rows += `<tr class="border-b hover:bg-gray-50">
+                            <td class="py-3 px-4 font-bold text-gray-700">${formattedDate} <br><span class="text-xs font-normal text-gray-500">${row.informed_time}</span></td>
                             <td class="py-3 px-4"><span class="${catColor} px-2 py-1 rounded text-[10px] font-bold uppercase">${row.category}</span></td>
                             <td class="py-3 px-4">
-                                <span class="block font-semibold text-gray-800 dark:text-gray-100">${row.nature_of_breakdown}</span>
+                                <span class="block font-semibold text-gray-800">${row.nature_of_breakdown}</span>
                                 <span class="block text-xs text-green-600 mt-1"><i class="fa-solid fa-wrench"></i> ${row.actions_taken || 'Pending'}</span>
                             </td>
                             <td class="py-3 px-4 text-center">
@@ -345,21 +331,20 @@
         // --- Load Services ---
         async function loadServiceHistory(unitNo) {
             const tableBody = document.getElementById('serviceTableBody');
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500 dark:text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
             try {
                 const response = await fetch(`${API_BASE}/services/${encodeURIComponent(unitNo)}`);
                 const data = await response.json();
-                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500 dark:text-gray-400 font-bold">No completed services recorded.</td></tr>'; return; }
+                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500 font-bold">No completed services recorded.</td></tr>'; return; }
 
                 let rows = '';
                 data.forEach(row => {
                     const formattedDate = new Date(row.service_date).toISOString().split('T')[0];
-                    rows += `
-                        <tr class="border-b hover:bg-gray-50">
+                    rows += `<tr class="border-b hover:bg-gray-50">
                             <td class="py-3 px-4 font-bold text-green-700">${formattedDate}</td>
-                            <td class="py-3 px-4 font-semibold text-gray-800 dark:text-gray-100">${row.service_type}</td>
-                            <td class="py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">${row.technicians}</td>
-                            <td class="py-3 px-4 text-xs text-gray-500 dark:text-gray-400">${row.notes || '-'}</td>
+                            <td class="py-3 px-4 font-semibold text-gray-800">${row.service_type}</td>
+                            <td class="py-3 px-4 font-semibold text-gray-600">${row.technicians}</td>
+                            <td class="py-3 px-4 text-xs text-gray-500">${row.notes || '-'}</td>
                         </tr>
                     `;
                 });

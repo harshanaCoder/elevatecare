@@ -10,7 +10,9 @@ const breakdownsRoutes = require('./routes/breakdowns.routes');
 const servicesRoutes = require('./routes/services.routes');
 const unitSpecsRoutes = require('./routes/unitSpecs.routes');
 const pendingRoutes = require('./routes/pending.routes');
-const techniciansRoutes = require('./routes/technicians.routes');
+const technicianNamesRoutes = require('./routes/technicianNames.routes');
+const breakdownTypesRoutes = require('./routes/breakdownTypes.routes');
+const serviceTypesRoutes = require('./routes/serviceTypes.routes');
 
 const app = express();
 app.use(cors());
@@ -44,7 +46,7 @@ const PUBLIC_PATHS = ['/login.html', '/healthz', '/favicon.ico'];
 function isPublicPath(requestPath) {
     if (PUBLIC_PATHS.includes(requestPath)) return true;
     if (requestPath.startsWith('/js/')) return true;   // config.js / sidebar.js — no sensitive data
-    if (requestPath.startsWith('/css/')) return true;  // theme.css — needed by login.html too
+    if (requestPath.startsWith('/css/')) return true;  // tailwind.css — needed by login.html too
     if (requestPath.startsWith('/api/auth/')) return true; // login/logout/me themselves
     return false;
 }
@@ -110,7 +112,9 @@ app.use('/api', breakdownsRoutes);
 app.use('/api', servicesRoutes);
 app.use('/api', unitSpecsRoutes);
 app.use('/api', pendingRoutes);
-app.use('/api', techniciansRoutes);
+app.use('/api', technicianNamesRoutes);
+app.use('/api', breakdownTypesRoutes);
+app.use('/api', serviceTypesRoutes);
 
 // Server Start
 const PORT = process.env.PORT || 5000;

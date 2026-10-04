@@ -24,7 +24,6 @@
         { href: 'breakdowns.html', icon: 'fa-triangle-exclamation', label: 'Breakdowns' },
         { href: 'services.html', icon: 'fa-screwdriver-wrench', label: 'Services' },
         { href: 'parts.html', icon: 'fa-gear', label: 'Spare Parts' },
-        { href: 'technicians.html', icon: 'fa-users', label: 'Technicians' },
         { href: 'reports.html', icon: 'fa-chart-pie', label: 'Analytics & Reports' },
         { href: 'settings.html', icon: 'fa-sliders', label: 'Settings' }
     ];
