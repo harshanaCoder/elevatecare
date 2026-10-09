@@ -23,8 +23,32 @@ function loadAccounts() {
     return accounts.filter(a => a.username && a.hashB64);
 }
 
+// Brute-force guard: after MAX_FAILED wrong attempts from one IP inside the
+// window, further logins from it are refused until the window passes. In-memory
+// is fine here — one app process, and a restart just resets the counters.
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const MAX_FAILED = 8;
+const failedLogins = new Map(); // ip -> { count, resetAt }
+
+function recordFailure(ip) {
+    const now = Date.now();
+    const entry = failedLogins.get(ip);
+    if (!entry || entry.resetAt <= now) failedLogins.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    else entry.count++;
+}
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of failedLogins) if (entry.resetAt <= now) failedLogins.delete(ip);
+}, LOGIN_WINDOW_MS).unref();
+
 router.post('/auth/login', async (req, res) => {
     const { username, password } = req.body;
+
+    const attempts = failedLogins.get(req.ip);
+    if (attempts && attempts.resetAt > Date.now() && attempts.count >= MAX_FAILED) {
+        return res.status(429).json({ error: 'Too many failed attempts. Please try again in a few minutes.' });
+    }
 
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password are required.' });
@@ -38,15 +62,18 @@ router.post('/auth/login', async (req, res) => {
 
     const account = accounts.find(a => a.username === username);
     if (!account) {
+        recordFailure(req.ip);
         return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
     const expectedHash = Buffer.from(account.hashB64, 'base64').toString('utf8');
     const passwordMatches = await bcrypt.compare(password, expectedHash);
     if (!passwordMatches) {
+        recordFailure(req.ip);
         return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
+    failedLogins.delete(req.ip);
     req.session.role = account.role;
     req.session.username = username;
     res.json({ message: '✅ Logged in!', role: account.role });
@@ -66,7 +93,10 @@ router.get('/auth/me', (req, res) => {
     res.json({
         loggedIn: !!role,
         role,
-        username: (req.session && req.session.username) || null
+        username: (req.session && req.session.username) || null,
+        // Lets pages hide demo-only tools (e.g. Pending's "Simulate Mobile Input")
+        // outside development.
+        devMode: process.env.NODE_ENV !== 'production'
     });
 });
 

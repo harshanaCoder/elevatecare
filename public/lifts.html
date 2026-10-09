@@ -12,6 +12,8 @@
     <!-- Sidebar -->
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/units.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
@@ -27,9 +29,6 @@
                     <label class="block text-xs font-bold text-gray-500 mb-1">1. Select Building</label>
                     <select id="buildingSelect" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 bg-gray-50">
                         <option value="">-- Choose Building --</option>
-                        <option value="BD_01">BD_01 </option>
-                        <option value="BD_02">BD_02 </option>
-                        <option value="BD_03">BD_03 </option>
                     </select>
                 </div>
                 <div class="flex-1">
@@ -109,15 +108,14 @@
 
                     <!-- TAB 2: Breakdowns -->
                     <div id="content-breakdown" class="tab-content hidden overflow-x-auto">
-                        <table class="w-full text-left border-collapse border border-gray-200 min-w-[640px]">
+                        <table class="stack-mobile w-full text-left border-collapse border border-gray-200 min-w-[640px]">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b">
                                     <th class="py-3 px-4">Date & Time</th>
                                     <th class="py-3 px-4">Category</th>
                                     <th class="py-3 px-4">Issue Details</th>
                                     <th class="py-3 px-4 text-center">Status</th>
-                                    <!-- Aluth Photos Column -->
-                                    <th class="py-3 px-4 text-center">Photos</th> 
+                                    <th class="py-3 px-4 text-center">Photos</th>
                                 </tr>
                             </thead>
                             <tbody id="breakdownTableBody" class="text-sm">
@@ -128,7 +126,7 @@
 
                     <!-- TAB 3: Services -->
                     <div id="content-service" class="tab-content hidden overflow-x-auto">
-                        <table class="w-full text-left border-collapse border border-gray-200 mt-2 min-w-[560px]">
+                        <table class="stack-mobile w-full text-left border-collapse border border-gray-200 mt-2 min-w-[560px]">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b">
                                     <th class="py-3 px-4">Completed Date (Actual)</th>
@@ -148,41 +146,30 @@
         </div>
     </div>
 
-    <!-- 📸 Photo Viewer Modal -->
-    <div id="photoModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-[450px]">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-camera-retro text-blue-500 mr-2"></i> Breakdown Photos</h3>
+    <!-- Photo viewer -->
+    <div id="photoModal" class="fixed inset-0 bg-black/70 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4" onclick="closePhotoModal()">
+        <div class="bg-white p-4 rounded-xl shadow-lg w-full max-w-3xl max-h-[92vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b">
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-camera-retro text-blue-500 mr-2"></i><span id="photoModalTitle">Photos</span></h3>
                 <button onclick="closePhotoModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="grid grid-cols-2 gap-3" id="modalPhotoContainer">
-                <div class="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 1</div>
-                <div class="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 font-bold text-xs"><i class="fa-solid fa-image text-2xl mb-1"></i> Image 2</div>
-            </div>
-            <p class="text-xs text-center text-gray-400 mt-4 font-semibold">Photos uploaded via ElevateCare Mobile App.</p>
+            <div id="modalPhotoContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            <p class="text-xs text-center text-gray-400 mt-3 font-semibold">Photos uploaded via the ElevateCare mobile app.</p>
         </div>
     </div>
 
     <!-- JavaScript -->
     <script>
-        const liftData = {
-            "BD_01": {
-                "PL": ["PL 1.01", "PL 1.02", "PL 1.03", "PL 1.04", "PL 1.05", "PL 1.06", "PL 1.07", "PL 1.08"],
-                "SL": ["SL 1.01", "SL 1.02"],
-                "ES": ["ES 1.03a", "ES 1.03b", "ES 1.04a", "ES 1.04b"]
-            },
-            "BD_02": {
-                "PL": ["PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36"],
-                "SL": ["SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09"],
-                "FSL": ["FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08"],
-                "ES": ["ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"]
-            },
-            "BD_03": {
-                "PL": ["PL 3.01", "PL 3.02", "PL 3.03", "PL 3.04"],
-                "FSL": ["FSL 3.01", "FSL 3.02", "FSL 3.03", "FSL 3.04", "FSL 3.05", "FSL 3.06"],
-                "ES": ["ES 3.01a", "ES 3.01b", "ES 3.02a", "ES 3.02b", "ES 3.03a", "ES 3.03b"]
-            }
-        };
+        let liftData = {};
+        loadUnits().then(data => {
+            liftData = data;
+            Object.keys(liftData).sort().forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = b;
+                document.getElementById('buildingSelect').appendChild(opt);
+            });
+        });
 
         const bldgSelect = document.getElementById('buildingSelect');
         const catSelect = document.getElementById('categorySelect');
@@ -266,12 +253,28 @@
             document.getElementById('tab-' + tabName).classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
         }
 
-        // Modal Functions
-        function openPhotoModal() {
+        // Opens the photo viewer with the given uploaded filenames (served from /uploads).
+        function openPhotos(filenames, title) {
+            document.getElementById('photoModalTitle').textContent = title || 'Photos';
+            document.getElementById('modalPhotoContainer').innerHTML = filenames.map(f =>
+                `<a href="/uploads/${encodeURIComponent(f)}" target="_blank" rel="noopener"><img src="/uploads/${encodeURIComponent(f)}" alt="Breakdown photo" class="w-full rounded-lg border border-gray-200 object-contain bg-gray-50 max-h-80"></a>`
+            ).join('');
             document.getElementById('photoModal').classList.remove('hidden');
         }
         function closePhotoModal() {
             document.getElementById('photoModal').classList.add('hidden');
+        }
+
+        // Photos for one breakdown row (fetched on click, so the table load stays light).
+        async function viewBreakdownPhotos(id, unitNo) {
+            try {
+                const response = await fetch(`${API_BASE}/breakdowns/${id}/photos`);
+                const files = await response.json();
+                openPhotos(files, `${unitNo} — breakdown photos`);
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
         }
 
         // The header badge reflects whether this specific unit has any
@@ -303,23 +306,26 @@
                 let rows = '';
                 data.forEach(row => {
                     let catColor = 'bg-gray-100 text-gray-700';
-                    if(row.category.includes('Door')) catColor = 'bg-red-100 text-red-700';
-                    else if(row.category.includes('Minor')) catColor = 'bg-yellow-100 text-yellow-700';
+                    const category = row.category || '';
+                    if(category.includes('Door')) catColor = 'bg-red-100 text-red-700';
+                    else if(category.includes('Minor')) catColor = 'bg-yellow-100 text-yellow-700';
                     else catColor = 'bg-blue-100 text-blue-700';
 
                     const formattedDate = new Date(row.informed_date).toISOString().split('T')[0];
                     rows += `<tr class="border-b hover:bg-gray-50">
-                            <td class="py-3 px-4 font-bold text-gray-700">${formattedDate} <br><span class="text-xs font-normal text-gray-500">${row.informed_time}</span></td>
-                            <td class="py-3 px-4"><span class="${catColor} px-2 py-1 rounded text-[10px] font-bold uppercase">${row.category}</span></td>
-                            <td class="py-3 px-4">
-                                <span class="block font-semibold text-gray-800">${row.nature_of_breakdown}</span>
-                                <span class="block text-xs text-green-600 mt-1"><i class="fa-solid fa-wrench"></i> ${row.actions_taken || 'Pending'}</span>
+                            <td data-label="Date & Time" class="py-3 px-4 font-bold text-gray-700">${formattedDate} <br><span class="text-xs font-normal text-gray-500">${escapeHtml(row.informed_time)}</span></td>
+                            <td data-label="Category" class="py-3 px-4"><span class="${catColor} px-2 py-1 rounded text-[10px] font-bold uppercase">${escapeHtml(row.category)}</span></td>
+                            <td data-label="Issue" class="py-3 px-4">
+                                <span class="block font-semibold text-gray-800">${escapeHtml(row.nature_of_breakdown)}</span>
+                                <span class="block text-xs text-green-600 mt-1"><i class="fa-solid fa-wrench"></i> ${escapeHtml(row.actions_taken || 'Pending')}</span>
                             </td>
-                            <td class="py-3 px-4 text-center">
+                            <td data-label="Status" class="py-3 px-4 text-center">
                                 ${row.job_status === 'Job Done' ? '<span class="text-green-600 font-bold text-xs"><i class="fa-solid fa-check"></i> Done</span>' : '<span class="text-red-500 font-bold text-xs"><i class="fa-solid fa-clock"></i> Pending</span>'}
                             </td>
-                            <td class="py-3 px-4 text-center">
-                                <button onclick="openPhotoModal()" class="text-blue-500 hover:text-blue-700 hover:underline text-xs font-bold transition"><i class="fa-solid fa-image"></i> View (2)</button>
+                            <td data-label="Photos" class="py-3 px-4 text-center">
+                                ${row.photo_count > 0
+                                    ? `<button data-unit="${escapeHtml(row.unit_no)}" onclick="viewBreakdownPhotos(${row.id}, this.dataset.unit)" class="text-blue-500 hover:text-blue-700 hover:underline text-xs font-bold transition"><i class="fa-solid fa-image"></i> View (${row.photo_count})</button>`
+                                    : '<span class="text-gray-300 text-xs">—</span>'}
                             </td>
                         </tr>
                     `;
@@ -331,25 +337,25 @@
         // --- Load Services ---
         async function loadServiceHistory(unitNo) {
             const tableBody = document.getElementById('serviceTableBody');
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading History...</td></tr>';
             try {
                 const response = await fetch(`${API_BASE}/services/${encodeURIComponent(unitNo)}`);
                 const data = await response.json();
-                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500 font-bold">No completed services recorded.</td></tr>'; return; }
+                if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500 font-bold">No completed services recorded.</td></tr>'; return; }
 
                 let rows = '';
                 data.forEach(row => {
-                    const formattedDate = new Date(row.service_date).toISOString().split('T')[0];
+                    const formattedDate = new Date(row.completed_date || row.service_date).toISOString().split('T')[0];
                     rows += `<tr class="border-b hover:bg-gray-50">
-                            <td class="py-3 px-4 font-bold text-green-700">${formattedDate}</td>
-                            <td class="py-3 px-4 font-semibold text-gray-800">${row.service_type}</td>
-                            <td class="py-3 px-4 font-semibold text-gray-600">${row.technicians}</td>
-                            <td class="py-3 px-4 text-xs text-gray-500">${row.notes || '-'}</td>
+                            <td data-label="Completed" class="py-3 px-4 font-bold text-green-700">${formattedDate}</td>
+                            <td data-label="Service" class="py-3 px-4 font-semibold text-gray-800">${escapeHtml(row.service_type)}</td>
+                            <td data-label="Technicians" class="py-3 px-4 font-semibold text-gray-600">${escapeHtml(row.technicians)}</td>
+                            <td data-label="Notes" class="py-3 px-4 text-xs text-gray-500">${escapeHtml(row.notes || '-')}</td>
                         </tr>
                     `;
                 });
                 tableBody.innerHTML = rows;
-            } catch (error) { tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-500 font-bold">Error loading data.</td></tr>'; }
+            } catch (error) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500 font-bold">Error loading data.</td></tr>'; }
         }
 
         // --- Load & Save Unit Specs ---

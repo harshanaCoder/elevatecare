@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---- Phone layout helpers (below Tailwind's `sm` breakpoint, 640px) ---- */
+@media (max-width: 639px) {
+    /* Data tables become stacked cards: each row is a card, each cell a
+       "LABEL .... value" line (labels come from the td's data-label), so action
+       buttons are never hidden off-screen behind a sideways scroll. */
+    table.stack-mobile { min-width: 0 !important; border: 0; }
+    .stack-mobile thead { display: none; }
+    .stack-mobile, .stack-mobile tbody, .stack-mobile tr, .stack-mobile td { display: block; width: 100%; }
+    .stack-mobile tr { border: 1px solid #e5e7eb !important; border-radius: 0.75rem; margin-bottom: 0.75rem; padding: 0.5rem 0.9rem; background: #fff; }
+    .stack-mobile td { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.45rem 0 !important; text-align: right !important; border: 0 !important; background: transparent !important; }
+    .stack-mobile td::before { content: attr(data-label); flex-shrink: 0; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; text-align: left; }
+    .stack-mobile td[data-label=""]::before { display: none; }
+    .stack-mobile td[data-label=""] { justify-content: flex-start; text-align: left !important; }
+    .stack-mobile td[colspan] { display: block; text-align: center !important; }
+    .stack-mobile td[colspan]::before { display: none; }
+
+    /* Finger-sized tap targets for the small icon/text buttons inside tables and lists. */
+    .stack-mobile td button { min-width: 40px; min-height: 40px; }
+    button[aria-label^="Delete"] { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+
+    /* The 10-11px badge/label sizes are fine on desktop but hard to read on a phone. */
+    .text-\[10px\] { font-size: 11px; }
+    .text-\[11px\] { font-size: 12px; }
+
+    /* iOS Safari zooms the page when a focused field's text is under 16px. */
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px !important; }
+}
+
+/* Keep the fixed footer clear of the home-indicator bar on notched phones. */
+#app-footer { padding-bottom: calc(0.375rem + env(safe-area-inset-bottom)); }
+

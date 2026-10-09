@@ -11,6 +11,8 @@
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/units.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
@@ -40,7 +42,7 @@
             <div class="p-6">
                 
                 <div id="content-schedule" class="tab-content block overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[700px]">
+                    <table class="stack-mobile w-full text-left border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
                                 <th class="py-3 px-4">Scheduled Date</th>
@@ -66,7 +68,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Select Unit (BD 2) *</label>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Select Unit *</label>
                                 <select id="unit_no" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 font-bold text-blue-700" required>
                                     <option value="">-- Choose Unit --</option>
                                 </select>
@@ -91,12 +93,23 @@
                                 </div>
                             </div>
 
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Repeat</label>
+                                <select id="recurrence_months" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Does not repeat</option>
+                                    <option value="1">Every month</option>
+                                    <option value="3">Every 3 months</option>
+                                    <option value="6">Every 6 months</option>
+                                    <option value="12">Every year</option>
+                                </select>
+                                <p class="text-[11px] text-gray-400 mt-1">When this service is marked done, the next one is scheduled automatically.</p>
+                            </div>
+
                             <div class="col-span-1 sm:col-span-2">
                                 <label class="block text-xs font-bold text-gray-500 mb-1">Special Notes / Instructions (Optional)</label>
                                 <textarea id="notes" rows="2" placeholder="Any specific areas to check... (Optional)" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                             </div>
                         </div>
-                        <div id="formMessage" class="hidden p-3 mt-3 rounded text-sm font-bold text-center"></div>
                         <div class="flex justify-end pt-4 border-t">
                             <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg shadow-md transition">
                                 <i class="fa-solid fa-calendar-plus mr-2"></i> Save Schedule
@@ -130,7 +143,7 @@
                     <p class="text-xs text-gray-400 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>Click a row to see full details.</p>
 
                     <div class="overflow-x-auto rounded-lg border border-gray-100">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
+                        <table class="stack-mobile w-full text-left border-collapse min-w-[600px]">
                             <thead>
                                 <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
                                     <th class="py-3 px-4">Completed Date</th>
@@ -144,6 +157,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="historyPagination" class="flex flex-col sm:flex-row justify-between items-center gap-2 mt-3 text-sm"></div>
                 </div>
 
             </div>
@@ -191,6 +205,16 @@
                     </div>
                 </div>
                 <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Repeat</label>
+                    <select id="edit_recurrence_months" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Does not repeat</option>
+                        <option value="1">Every month</option>
+                        <option value="3">Every 3 months</option>
+                        <option value="6">Every 6 months</option>
+                        <option value="12">Every year</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">Notes</label>
                     <textarea id="edit_notes" rows="2" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                 </div>
@@ -200,6 +224,18 @@
                         <option value="Scheduled">Scheduled</option>
                         <option value="Completed">Completed</option>
                     </select>
+                </div>
+                <div id="editCompletionSection" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Completed Date</label>
+                        <input type="date" id="edit_completed_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Parts Used (stock is adjusted to match this list)</label>
+                        <div id="editPartsUsedContainer" class="w-full border rounded-lg p-2 text-sm bg-white max-h-32 overflow-y-auto outline-none focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                            <p class="text-xs text-gray-400 p-1">Loading parts...</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
@@ -211,21 +247,35 @@
         </div>
     </div>
 
-    <!-- Confirm / Alert Dialog -->
-    <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
-            <div id="confirmIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl"></div>
-            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-1"></h3>
-            <p id="confirmMessage" class="text-sm text-gray-500 mb-6"></p>
-            <div class="flex justify-center gap-3">
-                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
-                <button id="confirmOkBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition">Confirm</button>
+    <!-- Mark Service Done -->
+    <div id="doneModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="text-lg font-bold text-gray-800">Mark Service Completed</h3>
+                <button type="button" onclick="closeDoneModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <p id="doneModalSummary" class="text-sm font-bold text-blue-600 mb-4"></p>
+            <form id="doneForm" class="space-y-4">
+                <input type="hidden" id="done_id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Completed Date *</label>
+                    <input type="date" id="done_completed_date" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Parts Used (optional — deducts stock on save)</label>
+                    <div id="donePartsUsedContainer" class="w-full border rounded-lg p-2 text-sm bg-white max-h-40 overflow-y-auto outline-none focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                        <p class="text-xs text-gray-400 p-1">Loading parts...</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeDoneModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" id="doneSubmitBtn" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition"><i class="fa-solid fa-check mr-1"></i> Mark Done</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Toast notifications: bottom of screen, color-coded, auto-dismiss -->
-    <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none w-full px-4"></div>
+
 
     <script>
         function switchTab(tabName) {
@@ -248,25 +298,30 @@
             }
         }
 
-        function populateBD2Units() {
-            const bd2Units = [
-                "PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36",
-                "SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09",
-                "FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08",
-                "ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"
-            ];
-            
+        // Same building/unit master data the Lifts and Breakdowns pages use.
+        let liftData = {};
+
+        async function populateUnits() {
+            liftData = await loadUnits();
             const unitSelect = document.getElementById('unit_no');
-            bd2Units.forEach(unit => {
-                const opt = document.createElement('option');
-                opt.value = unit;
-                opt.textContent = unit;
-                unitSelect.appendChild(opt);
+            Object.entries(liftData).forEach(([building, categories]) => {
+                const group = document.createElement('optgroup');
+                group.label = building;
+                Object.values(categories).flat().forEach(unit => {
+                    const opt = document.createElement('option');
+                    opt.value = unit;
+                    opt.textContent = unit;
+                    group.appendChild(opt);
+                });
+                unitSelect.appendChild(group);
             });
         }
 
-        function escapeHtml(str) {
-            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // Local-date helpers: `new Date().toISOString()` is UTC, which is still
+        // "yesterday" for the first hours of every day in timezones ahead of UTC.
+        function localTodayStr() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         }
 
         // Technician checkboxes (both the new-service form and the edit modal)
@@ -293,62 +348,40 @@
             }
         }
 
-        // Consistent fallback wording — every add/update/delete error path uses
-        // this same message unless the server gave a more specific one.
-        const GENERIC_ERROR = 'Something went wrong. Please try again.';
-
-        // Success/error feedback: bottom-of-screen toast, colored by type,
-        // auto-dismisses after 3s.
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const styles = { success: 'bg-green-600', error: 'bg-red-600' };
-            const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check';
-
-            const toast = document.createElement('div');
-            toast.className = `pointer-events-auto ${styles[type] || styles.success} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-2 opacity-0 transition-opacity duration-300 max-w-md`;
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
-            container.appendChild(toast);
-
-            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        // Parts available to record as "used" — only offered when a service is
+        // completed (Mark Done modal) or an already-completed one is edited.
+        // Each form gets its own checkbox/qty class, same split as
+        // tech-checkbox/edit-tech-checkbox above — both modals stay in the DOM
+        // even while hidden, so a shared class would let a checked box in one
+        // leak into the other's submit payload. The server adjusts stock by the
+        // difference from what's already on record, so re-saving never deducts
+        // the same part twice.
+        function partsUsedRowHtml(p, checkboxClass, qtyClass) {
+            return `<label class="flex items-center justify-between gap-2 mb-1.5 p-1 rounded hover:bg-gray-50">
+                <span class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="${p.id}" class="${checkboxClass} w-4 h-4 text-blue-600 rounded">
+                    <span class="font-semibold text-gray-700">${escapeHtml(p.part_name)}</span>
+                    <span class="text-[11px] text-gray-400">(${p.quantity} in stock)</span>
+                </span>
+                <input type="number" min="1" value="1" data-part-id="${p.id}" class="${qtyClass} w-14 border rounded text-xs p-1 outline-none focus:ring-1 focus:ring-blue-500">
+            </label>`;
         }
 
-        // Promise-based replacement for window.confirm() — resolves true/false,
-        // matches the app's own modal styling instead of the browser's dialog.
-        function showConfirm({ title, message, okText = 'Confirm', okColor = 'bg-blue-600 hover:bg-blue-700', icon = 'fa-solid fa-circle-question', iconColor = 'bg-blue-100 text-blue-600' }) {
-            return new Promise(resolve => {
-                const modal = document.getElementById('confirmModal');
-                const okBtn = document.getElementById('confirmOkBtn');
-                const cancelBtn = document.getElementById('confirmCancelBtn');
-
-                document.getElementById('confirmTitle').textContent = title;
-                document.getElementById('confirmMessage').textContent = message;
-
-                const iconEl = document.getElementById('confirmIcon');
-                iconEl.className = `w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl ${iconColor}`;
-                iconEl.innerHTML = `<i class="${icon}"></i>`;
-
-                okBtn.textContent = okText;
-                okBtn.className = `px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition ${okColor}`;
-
-                modal.classList.remove('hidden');
-
-                function cleanup(result) {
-                    modal.classList.add('hidden');
-                    okBtn.removeEventListener('click', onOk);
-                    cancelBtn.removeEventListener('click', onCancel);
-                    resolve(result);
-                }
-                function onOk() { cleanup(true); }
-                function onCancel() { cleanup(false); }
-
-                okBtn.addEventListener('click', onOk);
-                cancelBtn.addEventListener('click', onCancel);
-            });
+        async function loadPartsUsedOptions() {
+            const editContainer = document.getElementById('editPartsUsedContainer');
+            const doneContainer = document.getElementById('donePartsUsedContainer');
+            try {
+                const response = await fetch(`${API_BASE}/parts`);
+                const parts = await response.json();
+                const empty = '<p class="text-xs text-gray-400 p-1">No parts in inventory yet.</p>';
+                editContainer.innerHTML = parts.length ? parts.map(p => partsUsedRowHtml(p, 'edit-part-used-checkbox', 'edit-part-used-qty')).join('') : empty;
+                doneContainer.innerHTML = parts.length ? parts.map(p => partsUsedRowHtml(p, 'done-part-used-checkbox', 'done-part-used-qty')).join('') : empty;
+            } catch (err) {
+                console.error(err);
+                const failed = '<p class="text-xs text-red-400 p-1">Failed to load parts.</p>';
+                editContainer.innerHTML = failed;
+                doneContainer.innerHTML = failed;
+            }
         }
 
         function detailRow(label, value) {
@@ -360,6 +393,8 @@
         }
 
         let allServices = [];
+        let historyCurrentPage = 1;
+        const HISTORY_PAGE_SIZE = 10;
 
         async function loadServices() {
             try {
@@ -374,7 +409,7 @@
 
         function renderUpcoming() {
             let upcomingHTML = '';
-            const today = new Date().toISOString().split('T')[0];
+            const today = localTodayStr();
 
             allServices.filter(row => row.status === 'Scheduled').forEach(row => {
                 const dateObj = new Date(row.service_date);
@@ -386,12 +421,12 @@
                     : '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-black uppercase">Upcoming</span>';
 
                 upcomingHTML += `<tr class="hover:bg-gray-50 border-b">
-                        <td class="py-3 px-4 font-bold ${dateStyle}">${formattedDate} <br><span class="text-[10px] text-gray-400 font-normal">${isOverdue ? 'Passed' : 'Scheduled'}</span></td>
-                        <td class="py-3 px-4 font-black text-blue-600">${row.unit_no}</td>
-                        <td class="py-3 px-4 font-semibold text-gray-800">${row.service_type}</td>
-                        <td class="py-3 px-4 text-xs font-bold text-gray-600"><i class="fa-solid fa-user-gear mr-1"></i> ${row.technicians}</td>
-                        <td class="py-3 px-4 text-center">${statusBadge}</td>
-                        <td class="py-3 px-4 text-center">
+                        <td data-label="Scheduled" class="py-3 px-4 font-bold ${dateStyle}">${formattedDate} <br><span class="text-[10px] text-gray-400 font-normal">${isOverdue ? 'Passed' : 'Scheduled'}</span></td>
+                        <td data-label="Unit" class="py-3 px-4 font-black text-blue-600">${escapeHtml(row.unit_no)}</td>
+                        <td data-label="Service" class="py-3 px-4 font-semibold text-gray-800">${escapeHtml(row.service_type)}${row.recurrence_months ? `<span class="block text-[10px] font-bold text-indigo-500 mt-0.5"><i class="fa-solid fa-rotate mr-1"></i>Repeats every ${row.recurrence_months === 12 ? 'year' : row.recurrence_months === 1 ? 'month' : row.recurrence_months + ' months'}</span>` : ''}</td>
+                        <td data-label="Assigned To" class="py-3 px-4 text-xs font-bold text-gray-600"><i class="fa-solid fa-user-gear mr-1"></i> ${escapeHtml(row.technicians)}</td>
+                        <td data-label="Status" class="py-3 px-4 text-center">${statusBadge}</td>
+                        <td data-label="" class="py-3 px-4 text-center">
                             <button onclick="markServiceDone(${row.id})" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded text-[11px] font-bold shadow-sm transition">
                                 <i class="fa-solid fa-check mr-1"></i> Mark Done
                             </button>
@@ -406,6 +441,12 @@
         function clearServiceHistoryDateFilter() {
             document.getElementById('historyFromDate').value = '';
             document.getElementById('historyToDate').value = '';
+            historyCurrentPage = 1;
+            renderServiceHistory();
+        }
+
+        function onServiceHistoryFilterChange() {
+            historyCurrentPage = 1;
             renderServiceHistory();
         }
 
@@ -423,7 +464,7 @@
                     (row.technicians || '').toLowerCase().includes(term) ||
                     (row.notes || '').toLowerCase().includes(term);
                 const matchesType = !typeValue || row.service_type === typeValue;
-                const dateObj = new Date(row.service_date);
+                const dateObj = new Date(row.completed_date || row.service_date);
                 const rowDate = isNaN(dateObj) ? '' : dateObj.toISOString().split('T')[0];
                 const matchesDate = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
                 return matchesTerm && matchesType && matchesDate;
@@ -431,29 +472,39 @@
 
             if (!filtered.length) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 font-bold">No completed services match your search.</td></tr>';
+                renderPagination('historyPagination', 0, 1, HISTORY_PAGE_SIZE, () => {});
                 return;
             }
 
+            const totalPages = Math.max(1, Math.ceil(filtered.length / HISTORY_PAGE_SIZE));
+            if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
+            const pageRows = filtered.slice((historyCurrentPage - 1) * HISTORY_PAGE_SIZE, historyCurrentPage * HISTORY_PAGE_SIZE);
+
             // Only the essentials show in the row — technicians and notes are
             // in the detail modal, opened by clicking the row.
-            tbody.innerHTML = filtered.map(row => {
-                const dateObj = new Date(row.service_date);
+            tbody.innerHTML = pageRows.map(row => {
+                const dateObj = new Date(row.completed_date || row.service_date);
                 const formattedDate = isNaN(dateObj) ? row.service_date : dateObj.toISOString().split('T')[0];
 
                 return `<tr class="hover:bg-gray-50 border-b cursor-pointer" onclick="viewService(${row.id})">
-                        <td class="py-3 px-4 font-bold text-gray-600">${escapeHtml(formattedDate)}</td>
-                        <td class="py-3 px-4 font-black text-gray-800">${escapeHtml(row.unit_no)}</td>
-                        <td class="py-3 px-4 font-semibold text-gray-600">${escapeHtml(row.service_type)}</td>
-                        <td class="py-3 px-4 text-center">
+                        <td data-label="Completed" class="py-3 px-4 font-bold text-gray-600">${escapeHtml(formattedDate)}</td>
+                        <td data-label="Unit" class="py-3 px-4 font-black text-gray-800">${escapeHtml(row.unit_no)}</td>
+                        <td data-label="Service" class="py-3 px-4 font-semibold text-gray-600">${escapeHtml(row.service_type)}</td>
+                        <td data-label="Status" class="py-3 px-4 text-center">
                             <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Done</span>
                         </td>
-                        <td class="py-3 px-4 text-center">
+                        <td data-label="" class="py-3 px-4 text-center">
                             <button onclick="event.stopPropagation(); openEditServiceModal(${row.id})" class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button onclick="event.stopPropagation(); deleteService(${row.id})" class="text-red-600 hover:bg-red-50 p-2 rounded-md transition"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             }).join('');
+
+            renderPagination('historyPagination', filtered.length, historyCurrentPage, HISTORY_PAGE_SIZE, (newPage) => {
+                historyCurrentPage = newPage;
+                renderServiceHistory();
+            });
         }
 
         function viewService(id) {
@@ -462,6 +513,8 @@
 
             const dateObj = new Date(row.service_date);
             const formattedDate = isNaN(dateObj) ? row.service_date : dateObj.toISOString().split('T')[0];
+            const completedObj = new Date(row.completed_date);
+            const completedDate = row.completed_date && !isNaN(completedObj) ? completedObj.toISOString().split('T')[0] : null;
             const statusBadge = row.status === 'Completed'
                 ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Completed</span>'
                 : '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-black uppercase">Scheduled</span>';
@@ -469,13 +522,37 @@
             document.getElementById('viewModalBody').innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     ${detailRow('Unit No', `<span class="font-bold text-blue-600">${escapeHtml(row.unit_no)}</span>`)}
                     ${detailRow('Service Type', escapeHtml(row.service_type))}
-                    ${detailRow('Service Date', escapeHtml(formattedDate))}
+                    ${detailRow('Scheduled Date', escapeHtml(formattedDate))}
+                    ${completedDate ? detailRow('Completed Date', escapeHtml(completedDate)) : ''}
                     ${detailRow('Status', statusBadge)}
                 </div>
                 ${detailRow('Technicians', escapeHtml(row.technicians || 'Not assigned'))}
                 ${detailRow('Notes', escapeHtml(row.notes || '—'))}
+                <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1"><i class="fa-solid fa-gear mr-1"></i> Parts Used</div>
+                    <div id="viewPartsUsedSection" class="text-sm text-gray-500">Loading...</div>
+                </div>
             `;
             document.getElementById('viewModal').classList.remove('hidden');
+            loadViewPartsUsed(id);
+        }
+
+        async function loadViewPartsUsed(id) {
+            const section = document.getElementById('viewPartsUsedSection');
+            try {
+                const response = await fetch(`${API_BASE}/services/${id}/parts-used`);
+                const rows = await response.json();
+                section.innerHTML = rows.length
+                    ? `<ul class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden">${rows.map(r => `
+                        <li class="flex items-center justify-between px-3 py-2 bg-white">
+                            <span class="font-semibold text-gray-700">${escapeHtml(r.part_name)}${r.part_code ? ` <span class="text-gray-400 font-normal">#${escapeHtml(r.part_code)}</span>` : ''}</span>
+                            <span class="text-orange-600 font-bold">-${r.quantity}</span>
+                        </li>`).join('')}</ul>`
+                    : '<span class="text-gray-400">No parts recorded for this service.</span>';
+            } catch (err) {
+                console.error(err);
+                section.innerHTML = '<span class="text-red-400">Failed to load parts used.</span>';
+            }
         }
 
         function closeViewModal() {
@@ -495,14 +572,45 @@
             document.getElementById('edit_service_type').value = row.service_type || '';
             document.getElementById('edit_notes').value = row.notes || '';
             document.getElementById('edit_status').value = row.status || 'Scheduled';
+            document.getElementById('edit_recurrence_months').value = row.recurrence_months ? String(row.recurrence_months) : '';
+            document.getElementById('edit_completed_date').value = row.completed_date ? new Date(row.completed_date).toISOString().split('T')[0] : '';
+            toggleEditCompletion();
 
             const selectedTechs = (row.technicians || '').split(' / ').map(t => t.trim());
             document.querySelectorAll('.edit-tech-checkbox').forEach(cb => {
                 cb.checked = selectedTechs.includes(cb.value);
             });
 
+            // Pre-fill Parts Used with what's already on record (completed services only).
+            document.querySelectorAll('.edit-part-used-checkbox').forEach(cb => { cb.checked = false; });
+            document.querySelectorAll('.edit-part-used-qty').forEach(input => { input.value = 1; });
+            editPartsReady = row.status !== 'Completed';
+            if (row.status === 'Completed') {
+                fetch(`${API_BASE}/services/${id}/parts-used`)
+                    .then(r => r.json())
+                    .then(used => {
+                        used.forEach(u => {
+                            const cb = document.querySelector(`.edit-part-used-checkbox[value="${u.part_id}"]`);
+                            const qty = document.querySelector(`.edit-part-used-qty[data-part-id="${u.part_id}"]`);
+                            if (cb) cb.checked = true;
+                            if (qty) qty.value = Number(u.quantity);
+                        });
+                        editPartsReady = true;
+                    })
+                    .catch(err => { console.error(err); showToast('Could not load the parts already recorded — please close and reopen this form.', 'error'); });
+            }
+
             document.getElementById('editModal').classList.remove('hidden');
         }
+
+        // Guards the Update button until the existing parts list has loaded —
+        // saving before then would tell the server "no parts" and return them all.
+        let editPartsReady = true;
+
+        function toggleEditCompletion() {
+            document.getElementById('editCompletionSection').classList.toggle('hidden', document.getElementById('edit_status').value !== 'Completed');
+        }
+        document.getElementById('edit_status').addEventListener('change', toggleEditCompletion);
 
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
@@ -513,6 +621,8 @@
 
             const id = document.getElementById('edit_id').value;
             const unitNo = document.getElementById('edit_unit_no').value.trim();
+
+            if (!editPartsReady) { showToast('Still loading the recorded parts — please try again in a moment.', 'error'); return; }
 
             const confirmed = await showConfirm({
                 title: 'Save changes?',
@@ -536,7 +646,13 @@
                 service_type: document.getElementById('edit_service_type').value,
                 technicians: selectedTechs,
                 notes: document.getElementById('edit_notes').value.trim() || '-',
-                status: document.getElementById('edit_status').value
+                status: document.getElementById('edit_status').value,
+                recurrence_months: document.getElementById('edit_recurrence_months').value || null,
+                completed_date: document.getElementById('edit_completed_date').value || null,
+                parts_used: Array.from(document.querySelectorAll('.edit-part-used-checkbox:checked')).map(cb => ({
+                    part_id: parseInt(cb.value, 10),
+                    quantity: parseInt(document.querySelector(`.edit-part-used-qty[data-part-id="${cb.value}"]`).value, 10) || 1
+                }))
             };
 
             try {
@@ -550,7 +666,8 @@
                 if (response.ok) {
                     closeEditModal();
                     loadServices();
-                    showToast('Service updated successfully!', 'success');
+                    loadPartsUsedOptions(); // refresh stock counts shown next to each part
+                    showToast(result.next_service_date ? `Service updated! Next one scheduled for ${String(result.next_service_date).split('T')[0]}.` : 'Service updated successfully!', 'success');
                 } else {
                     showToast(result.error || GENERIC_ERROR, 'error');
                 }
@@ -569,7 +686,7 @@
 
             const confirmed = await showConfirm({
                 title: 'Delete service record?',
-                message: `Delete the service record for "${row.unit_no}"? This cannot be undone.`,
+                message: `Delete the service record for "${row.unit_no}"? Any parts recorded on it go back to stock. This cannot be undone.`,
                 okText: 'Delete',
                 okColor: 'bg-red-600 hover:bg-red-700',
                 icon: 'fa-solid fa-trash',
@@ -581,6 +698,7 @@
                 const response = await fetch(`${API_BASE}/services/${id}`, { method: 'DELETE' });
                 if (response.ok) {
                     loadServices();
+                    loadPartsUsedOptions(); // deleting returns its parts to stock
                     showToast('Service deleted successfully!', 'success');
                 } else {
                     const result = await response.json();
@@ -592,22 +710,21 @@
             }
         }
 
-        document.getElementById('historySearchInput').addEventListener('input', renderServiceHistory);
-        document.getElementById('historyTypeFilter').addEventListener('change', renderServiceHistory);
-        document.getElementById('historyFromDate').addEventListener('change', renderServiceHistory);
-        document.getElementById('historyToDate').addEventListener('change', renderServiceHistory);
+        document.getElementById('historySearchInput').addEventListener('input', onServiceHistoryFilterChange);
+        document.getElementById('historyTypeFilter').addEventListener('change', onServiceHistoryFilterChange);
+        document.getElementById('historyFromDate').addEventListener('change', onServiceHistoryFilterChange);
+        document.getElementById('historyToDate').addEventListener('change', onServiceHistoryFilterChange);
 
-  // 3. Add New Service Data
+        // 3. Add New Service Data
         document.getElementById('serviceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const btn = document.getElementById('submitBtn');
-            const msg = document.getElementById('formMessage');
 
             const selectedTechs = Array.from(document.querySelectorAll('.tech-checkbox:checked')).map(cb => cb.value).join(' / ');
-            
+
             if (!selectedTechs) {
-                alert("Please select at least one technician!");
+                showToast('Please select at least one technician.', 'error');
                 return;
             }
 
@@ -618,8 +735,9 @@
                 unit_no: document.getElementById('unit_no').value,
                 service_date: document.getElementById('service_date').value,
                 service_type: document.getElementById('service_type').value,
-                technicians: selectedTechs, 
-                notes: document.getElementById('notes').value.trim() || "-"
+                technicians: selectedTechs,
+                notes: document.getElementById('notes').value.trim() || "-",
+                recurrence_months: document.getElementById('recurrence_months').value || null
             };
 
             try {
@@ -630,53 +748,77 @@
                 });
 
                 const result = await response.json();
-                
+
                 if (response.ok) {
-                    msg.className = "p-3 mt-3 rounded text-sm font-bold text-center bg-green-100 text-green-700 block";
-                    msg.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + result.message;
                     document.getElementById('serviceForm').reset();
-                    document.querySelectorAll('.tech-checkbox').forEach(cb => cb.checked = false); 
-                    loadServices(); 
-                } else {
-                    // ⚠️ METHANA WENAS KALA: Error eka screen ekema pennanawa ⚠️
-                    msg.className = "p-3 mt-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block";
-                    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Server Error: ' + (result.error || "Unknown Error");
-                    alert("Developer Info: " + result.error); // Alert ekakuth danawa pahasuwata
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Network error: Cannot connect to Node server!");
-            } finally {
-                btn.innerHTML = '<i class="fa-solid fa-calendar-plus mr-2"></i> Save Schedule';
-                btn.disabled = false;
-                setTimeout(() => msg.classList.add('hidden'), 5000);
-            }
-        });
-
-        async function markServiceDone(id) {
-            const confirmed = await showConfirm({
-                title: 'Mark as completed?',
-                message: 'Are you sure you want to mark this service as Completed?',
-                okText: 'Mark Done',
-                okColor: 'bg-green-600 hover:bg-green-700',
-                icon: 'fa-solid fa-check',
-                iconColor: 'bg-green-100 text-green-600'
-            });
-            if (!confirmed) return;
-
-            try {
-                const response = await fetch(`${API_BASE}/services/${id}`, { method: 'PUT' });
-                if (response.ok) {
+                    document.querySelectorAll('.tech-checkbox').forEach(cb => cb.checked = false);
                     loadServices();
-                    showToast('Service marked as completed!', 'success');
+                    switchTab('schedule');
+                    showToast('Service scheduled successfully!', 'success');
                 } else {
-                    showToast(GENERIC_ERROR, 'error');
+                    showToast(result.error || GENERIC_ERROR, 'error');
                 }
             } catch (err) {
                 console.error(err);
                 showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-calendar-plus mr-2"></i> Save Schedule';
+                btn.disabled = false;
             }
+        });
+
+        function markServiceDone(id) {
+            const row = allServices.find(s => s.id === id);
+            if (!row) return;
+
+            document.getElementById('done_id').value = id;
+            document.getElementById('doneModalSummary').textContent = `${row.unit_no} — ${row.service_type}`;
+            document.getElementById('done_completed_date').value = localTodayStr();
+            document.querySelectorAll('.done-part-used-checkbox').forEach(cb => { cb.checked = false; });
+            document.querySelectorAll('.done-part-used-qty').forEach(input => { input.value = 1; });
+            document.getElementById('doneModal').classList.remove('hidden');
         }
+
+        function closeDoneModal() {
+            document.getElementById('doneModal').classList.add('hidden');
+        }
+
+        document.getElementById('doneForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('doneSubmitBtn');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/services/${document.getElementById('done_id').value}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        completed_date: document.getElementById('done_completed_date').value,
+                        parts_used: Array.from(document.querySelectorAll('.done-part-used-checkbox:checked')).map(cb => ({
+                            part_id: parseInt(cb.value, 10),
+                            quantity: parseInt(document.querySelector(`.done-part-used-qty[data-part-id="${cb.value}"]`).value, 10) || 1
+                        }))
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    closeDoneModal();
+                    loadServices();
+                    loadPartsUsedOptions(); // refresh stock counts shown next to each part
+                    showToast(result.next_service_date ? `Service marked as completed! Next one scheduled for ${String(result.next_service_date).split('T')[0]}.` : 'Service marked as completed!', 'success');
+                } else {
+                    const result = await response.json().catch(() => ({}));
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
         // Service types come from Settings (shared list) instead of being
         // hardcoded here — keeps the add form, edit modal and history filter in sync.
@@ -697,10 +839,11 @@
         }
 
         window.onload = function() {
-            populateBD2Units();
+            populateUnits();
             loadServices();
             loadTechnicianCheckboxes();
             loadServiceTypeOptions();
+            loadPartsUsedOptions();
         };
     </script>
 </body>

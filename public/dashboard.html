@@ -6,12 +6,12 @@
     <title>Dashboard - ElevateCare</title>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100 font-sans flex flex-col lg:flex-row h-screen overflow-hidden">
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
@@ -19,7 +19,7 @@
 
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-black text-gray-800">Welcome back, Admin! 👋</h1>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-800">Welcome back, <span id="welcomeName">Admin</span>! 👋</h1>
                 <p class="text-gray-500 mt-1 font-semibold">Real-time control panel for ElevateCare Operations.</p>
             </div>
             <div class="sm:text-right">
@@ -32,7 +32,7 @@
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center transition hover:shadow-md border-l-4 border-l-blue-500">
                 <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl mr-4"><i class="fa-solid fa-stopwatch"></i></div>
                 <div>
-                    <p class="text-xs font-bold text-gray-500 uppercase">Avg Resolution Time</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">Avg Response Time</p>
                     <p id="stat-avgres" class="text-3xl font-black text-gray-800">...</p>
                 </div>
             </div>
@@ -46,8 +46,8 @@
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center transition hover:shadow-md border-l-4 border-l-orange-500">
                 <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xl mr-4"><i class="fa-solid fa-calendar-xmark"></i></div>
                 <div>
-                    <p class="text-xs font-bold text-gray-500 uppercase">Missed Services (Month)</p>
-                    <p class="text-3xl font-black text-gray-800 text-orange-600">02</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">Missed Services (This Month)</p>
+                    <p id="stat-missed" class="text-3xl font-black text-orange-600">...</p>
                 </div>
             </div>
         </div>
@@ -57,7 +57,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 col-span-1 overflow-hidden flex flex-col h-[350px]">
                 <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                     <h3 class="text-md font-bold text-gray-800"><i class="fa-solid fa-calendar-day text-orange-500 mr-2"></i>Services (Next 7 Days)</h3>
-                    <a href="services.html" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
+                    <a href="services.html" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-3 py-2 sm:px-2.5 sm:py-1 rounded transition shadow-sm flex items-center gap-1">
                         <i class="fa-solid fa-plus text-[10px]"></i> New
                     </a>
                 </div>
@@ -66,14 +66,14 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 col-span-2 overflow-hidden flex flex-col h-[350px]">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 lg:col-span-2 overflow-hidden flex flex-col h-[350px]">
                 <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                     <h3 class="text-md font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Pending Breakdowns <span id="pendingCount" class="text-gray-400 font-normal"></span></h3>
                     <div class="flex items-center gap-2">
-                        <a href="breakdowns.html" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
+                        <a href="breakdowns.html" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 sm:px-2.5 sm:py-1 rounded transition shadow-sm flex items-center gap-1">
                             <i class="fa-solid fa-plus text-[10px]"></i> New
                         </a>
-                        <a href="breakdowns.html" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-2.5 py-1 rounded transition shadow-sm flex items-center gap-1">
+                        <a href="breakdowns.html" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-3 py-2 sm:px-2.5 sm:py-1 rounded transition shadow-sm flex items-center gap-1">
                             View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>
                     </div>
@@ -86,6 +86,35 @@
         </div>
     </div>
 
+    <!-- Mark Job Done -->
+    <div id="doneModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="text-lg font-bold text-gray-800">Mark Job Done</h3>
+                <button type="button" onclick="closeDoneModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="doneModalUnit" class="text-sm font-bold text-blue-600 mb-4"></p>
+            <form id="doneForm" class="space-y-4">
+                <input type="hidden" id="done_id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Actions Taken *</label>
+                    <textarea id="done_actions" required rows="2" placeholder="What was fixed?" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Attended By (Select Technicians)</label>
+                    <div id="doneTechContainer" class="w-full border rounded-lg p-2 text-sm bg-white h-28 overflow-y-auto border-gray-300 shadow-inner">
+                        <p class="text-xs text-gray-400 p-1">Loading technicians...</p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeDoneModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" id="doneSubmitBtn" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition"><i class="fa-solid fa-check mr-1"></i> Mark Done</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <script>
         function updateClock() {
             const now = new Date();
@@ -93,6 +122,10 @@
             document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
         setInterval(updateClock, 1000); updateClock();
+
+        fetch(`${API_BASE}/auth/me`).then(r => r.json()).then(me => {
+            if (me.username) document.getElementById('welcomeName').textContent = me.username;
+        }).catch(() => {});
 
         async function loadDashboardData() {
             try {
@@ -181,12 +214,12 @@
 
                 return `<div class="p-3 flex justify-between items-center hover:bg-gray-50">
                         <div>
-                            <span class="font-black text-blue-600 block">${row.unit_no}</span>
-                            <span class="text-xs text-gray-500 font-semibold">${row.category} &middot; Informed ${formattedDate}</span>
+                            <span class="font-black text-blue-600 block">${escapeHtml(row.unit_no)}</span>
+                            <span class="text-xs text-gray-500 font-semibold">${escapeHtml(row.category)} &middot; Informed ${escapeHtml(formattedDate)}</span>
                             <span class="block mt-1">${agingBadge(row.informed_date)}</span>
                         </div>
-                        <button onclick="markJobAsDone(${row.id}, '${row.unit_no}')" class="bg-red-500 hover:bg-red-600 text-white font-bold px-2.5 py-1 rounded shadow-sm text-[10px] uppercase transition flex items-center gap-1">
-                            <i class="fa-solid fa-clock"></i> Pending
+                        <button data-id="${row.id}" data-unit="${escapeHtml(row.unit_no)}" onclick="openDoneModal(Number(this.dataset.id), this.dataset.unit)" class="bg-green-100 hover:bg-green-200 text-green-700 font-bold px-2.5 py-1 rounded shadow-sm text-[10px] uppercase transition flex items-center gap-1">
+                            <i class="fa-solid fa-check"></i> Mark Done
                         </button>
                     </div>
                 `;
@@ -203,6 +236,15 @@
                 const weekAhead = new Date(Date.UTC(y, m - 1, d) + 7 * 86400000).toISOString().split('T')[0];
 
                 const scheduled = data.filter(row => row.status !== 'Completed');
+
+                // Missed = still not completed although the date has passed,
+                // and that date falls in the current calendar month.
+                const monthPrefix = today.slice(0, 7);
+                document.getElementById('stat-missed').textContent = scheduled.filter(row => {
+                    const d = toDateStr(row.service_date);
+                    return d < today && d.startsWith(monthPrefix);
+                }).length;
+
                 const overdue = scheduled.filter(row => toDateStr(row.service_date) < today);
                 const upcoming = scheduled.filter(row => {
                     const d2 = toDateStr(row.service_date);
@@ -219,12 +261,12 @@
                     const unitStyle = isOverdue ? 'text-red-700' : 'text-blue-700';
                     const badge = isOverdue
                         ? '<span class="bg-red-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Overdue</span>'
-                        : `<span class="bg-blue-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-user-wrench mr-1"></i>${row.technicians || 'Unassigned'}</span>`;
+                        : `<span class="bg-blue-600 text-white font-bold text-[10px] px-2 py-1 rounded shadow-sm"><i class="fa-solid fa-user-wrench mr-1"></i>${escapeHtml(row.technicians || 'Unassigned')}</span>`;
 
                     return `<div class="p-3 ${cardStyle} rounded-lg border flex justify-between items-start">
                             <div>
-                                <span class="font-black ${unitStyle} block">${row.unit_no}</span>
-                                <span class="text-xs text-gray-500 font-semibold">${row.service_type} &middot; ${toDateStr(row.service_date)}</span>
+                                <span class="font-black ${unitStyle} block">${escapeHtml(row.unit_no)}</span>
+                                <span class="text-xs text-gray-500 font-semibold">${escapeHtml(row.service_type)} &middot; ${toDateStr(row.service_date)}</span>
                             </div>
                             ${badge}
                         </div>
@@ -239,41 +281,70 @@
                     upcoming.map(row => renderRow(row, false)).join('');
             } catch (error) {
                 console.error('Error fetching upcoming services:', error);
+                document.getElementById('stat-missed').textContent = 'N/A';
                 container.innerHTML = '<div class="text-center py-8 text-red-400 font-bold">Failed to load upcoming services.</div>';
             }
         }
 
-        async function markJobAsDone(jobId, unitNo) {
-            const actions = prompt(`What action was taken to fix ${unitNo}?`);
-            if (actions === null) return; 
-            if (actions.trim() === "") { alert("You must specify actions taken to complete the job!"); return; }
+        async function openDoneModal(jobId, unitNo) {
+            document.getElementById('done_id').value = jobId;
+            document.getElementById('doneModalUnit').textContent = unitNo;
+            document.getElementById('done_actions').value = '';
 
-            const now = new Date();
-            const todayDate = now.toISOString().split('T')[0];
-            const todayTime = now.toTimeString().split(' ')[0].substring(0,5);
+            const container = document.getElementById('doneTechContainer');
+            container.innerHTML = '<p class="text-xs text-gray-400 p-1">Loading technicians...</p>';
+            document.getElementById('doneModal').classList.remove('hidden');
 
             try {
-                const response = await fetch(`${API_BASE}/breakdowns/${jobId}`, {
+                const response = await fetch(`${API_BASE}/technician-names`);
+                const technicians = await response.json();
+                container.innerHTML = technicians.length ? technicians.map(t => `
+                    <label class="flex items-center space-x-2 mb-1.5 cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="${escapeHtml(t.name)}" class="done-tech-checkbox w-4 h-4 text-blue-600 rounded"> <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span></label>
+                `).join('') : '<p class="text-xs text-gray-400 p-1">No technicians added yet — add some from Settings.</p>';
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-xs text-red-400 p-1">Failed to load technicians.</p>';
+            }
+        }
+
+        function closeDoneModal() {
+            document.getElementById('doneModal').classList.add('hidden');
+        }
+
+        document.getElementById('doneForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const now = new Date();
+            const btn = document.getElementById('doneSubmitBtn');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/breakdowns/${document.getElementById('done_id').value}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        actions_taken: actions,
-                        attended_date: todayDate,
-                        attended_time: todayTime
+                        actions_taken: document.getElementById('done_actions').value.trim(),
+                        attended_date: localTodayStr(),
+                        attended_time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+                        attended_by: Array.from(document.querySelectorAll('.done-tech-checkbox:checked')).map(cb => cb.value).join(' / ') || null
                     })
                 });
 
                 if (response.ok) {
-                    alert(`🎉 Job for ${unitNo} successfully marked as COMPLETED!`);
-                    loadDashboardData(); 
+                    closeDoneModal();
+                    loadDashboardData();
+                    showToast('Job marked as done!', 'success');
                 } else {
-                    alert("Failed to update status.");
+                    const result = await response.json().catch(() => ({}));
+                    showToast(result.error || GENERIC_ERROR, 'error');
                 }
-            } catch (error) {
-                console.error("Error updating status:", error);
-                alert("Server error while updating.");
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.disabled = false;
             }
-        }
+        });
 
         window.onload = function () {
             loadDashboardData();

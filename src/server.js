@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const path = require('path');
 const express = require('express');
-const cors = require('cors');
 const cookieSession = require('cookie-session');
 
 const authRoutes = require('./routes/auth.routes');
@@ -13,12 +12,44 @@ const pendingRoutes = require('./routes/pending.routes');
 const technicianNamesRoutes = require('./routes/technicianNames.routes');
 const breakdownTypesRoutes = require('./routes/breakdownTypes.routes');
 const serviceTypesRoutes = require('./routes/serviceTypes.routes');
+const partsRoutes = require('./routes/parts.routes');
+const unitsRoutes = require('./routes/units.routes');
+const mobileRoutes = require('./routes/mobile.routes');
+const { UPLOAD_DIR } = require('./config/photos');
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+// No cors(): the pages and the API are served from the same origin, so
+// cross-origin access is never needed — leaving it off means other websites
+// can't script against this API from a visitor's browser.
+// The mobile endpoint carries base64 photos, so it gets a bigger body limit;
+// it must be mounted before the global parser (which would reject >1mb).
+app.use('/api/mobile', express.json({ limit: '30mb' }));
+app.use(express.json({ limit: '1mb' }));
+
+// Caddy (or any reverse proxy) terminates HTTPS in front of this app; trusting
+// one proxy hop lets Express see the real client IP (for login rate-limiting)
+// and the original protocol (for secure cookies).
+app.set('trust proxy', 1);
+
+// Baseline security headers (a hand-rolled subset of what helmet sets, without
+// the extra dependency). No CSP on purpose: pages load Tailwind/Chart.js/Font
+// Awesome from CDNs and use inline scripts, so a strict policy would break them.
+app.use((req, res, next) => {
+    res.set({
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'Referrer-Policy': 'same-origin'
+    });
+    next();
+});
 
 if (!process.env.SESSION_SECRET) {
+    if (IS_PRODUCTION) {
+        console.error('❌ SESSION_SECRET is not set — refusing to start in production with the insecure default.');
+        process.exit(1);
+    }
     console.warn('⚠️  SESSION_SECRET is not set in .env — using an insecure default. Fine for a quick local test, set a real one before deploying anywhere.');
 }
 
@@ -34,6 +65,11 @@ app.use(cookieSession({
     keys: [process.env.SESSION_SECRET || 'dev-only-insecure-secret-change-me'],
     httpOnly: true,
     sameSite: 'lax',
+    // Set COOKIE_SECURE=true in .env once the site is served over HTTPS (e.g.
+    // after switching the Caddyfile to a real domain). Off by default because a
+    // secure cookie is never sent over plain HTTP, which would break login on
+    // the current http://:80 setup.
+    secure: process.env.COOKIE_SECURE === 'true',
     maxAge: 8 * 60 * 60 * 1000 // 8 hours
 }));
 
@@ -48,15 +84,15 @@ function isPublicPath(requestPath) {
     if (requestPath.startsWith('/js/')) return true;   // config.js / sidebar.js — no sensitive data
     if (requestPath.startsWith('/css/')) return true;  // tailwind.css — needed by login.html too
     if (requestPath.startsWith('/api/auth/')) return true; // login/logout/me themselves
+    if (requestPath === '/api/mobile/breakdowns') return true; // mobile app — authenticates with MOBILE_API_KEY itself
     return false;
 }
 
 const ROLE_ACCESS = {
     reports: {
-        // settings.html is just a per-browser light/dark preference
-        // (localStorage, no server data) — harmless for any logged-in role.
-        pages: ['/reports.html', '/settings.html'],
-        api: ['/api/all-breakdowns', '/api/breakdowns-filter']
+        // /api/breakdown-types and /api/units feed reports.html's filters.
+        pages: ['/reports.html'],
+        api: ['/api/all-breakdowns', '/api/breakdowns-filter', '/api/breakdown-types', '/api/units']
     }
 };
 
@@ -94,6 +130,8 @@ app.use((req, res, next) => {
 
 // 🌐 Serve the frontend (public/) as static files
 app.use(express.static(path.join(__dirname, '../public')));
+// Uploaded breakdown photos — behind the auth gate above, so only logged-in admins can fetch them.
+app.use('/uploads', express.static(UPLOAD_DIR, { index: false, dotfiles: 'ignore' }));
 app.get('/', (req, res) => {
     const role = req.session && req.session.role;
     res.redirect(role ? landingPageFor(role) : '/login.html');
@@ -115,6 +153,9 @@ app.use('/api', pendingRoutes);
 app.use('/api', technicianNamesRoutes);
 app.use('/api', breakdownTypesRoutes);
 app.use('/api', serviceTypesRoutes);
+app.use('/api', partsRoutes);
+app.use('/api', unitsRoutes);
+app.use('/api', mobileRoutes);
 
 // Server Start
 const PORT = process.env.PORT || 5000;

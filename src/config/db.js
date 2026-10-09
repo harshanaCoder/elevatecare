@@ -13,7 +13,12 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || 'elevatecare_db',
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    // Return DATE columns as plain 'YYYY-MM-DD' strings. By default mysql2
+    // builds a JS Date at LOCAL midnight, which then serializes to JSON as the
+    // previous day in any timezone ahead of UTC (e.g. Sri Lanka) when the app
+    // runs outside Docker.
+    dateStrings: ['DATE']
 });
 
 // Sanity-check connectivity once at startup (queries themselves still go

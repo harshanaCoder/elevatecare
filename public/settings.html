@@ -11,6 +11,7 @@
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
@@ -66,83 +67,37 @@
 
                 <ul id="serviceTypeList" class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden overflow-y-auto max-h-80"></ul>
             </div>
-        </div>
 
-    </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:col-span-3">
+                <h2 class="text-md font-bold text-gray-800 mb-1"><i class="fa-solid fa-building text-indigo-500 mr-2"></i>Units (Lifts / Escalators)</h2>
+                <p class="text-sm text-gray-500 mb-5">The master list used by the Building → Type → Unit dropdowns everywhere. A unit with breakdown or service records can't be removed.</p>
 
-    <!-- Confirm / Alert Dialog -->
-    <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
-            <div id="confirmIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl"></div>
-            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-1"></h3>
-            <p id="confirmMessage" class="text-sm text-gray-500 mb-6"></p>
-            <div class="flex justify-center gap-3">
-                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
-                <button id="confirmOkBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition">Confirm</button>
+                <form id="addUnitForm" class="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4">
+                    <input type="text" id="newUnitNo" placeholder="Unit No (e.g. PL 2.40)" required
+                        class="border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="newUnitBuilding" placeholder="Building (e.g. BD_02)" required list="buildingSuggestions"
+                        class="border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <datalist id="buildingSuggestions"></datalist>
+                    <select id="newUnitType" class="border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="PL">Passenger Lift (PL)</option>
+                        <option value="SL">Service Lift (SL)</option>
+                        <option value="FSL">Freight Service Lift (FSL)</option>
+                        <option value="ES">Escalator (ES)</option>
+                    </select>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </form>
+
+                <div id="unitList" class="border border-gray-100 rounded-lg overflow-y-auto max-h-96"></div>
             </div>
         </div>
+
     </div>
 
-    <!-- Toast notifications: bottom of screen, color-coded, auto-dismiss -->
-    <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none w-full px-4"></div>
+
 
     <script>
-        const GENERIC_ERROR = 'Something went wrong. Please try again.';
-
-        function escapeHtml(str) {
-            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        }
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const styles = { success: 'bg-green-600', error: 'bg-red-600' };
-            const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check';
-
-            const toast = document.createElement('div');
-            toast.className = `pointer-events-auto ${styles[type] || styles.success} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-2 opacity-0 transition-opacity duration-300 max-w-md`;
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
-            container.appendChild(toast);
-
-            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function showConfirm({ title, message, okText = 'Confirm', okColor = 'bg-blue-600 hover:bg-blue-700', icon = 'fa-solid fa-circle-question', iconColor = 'bg-blue-100 text-blue-600' }) {
-            return new Promise(resolve => {
-                const modal = document.getElementById('confirmModal');
-                const okBtn = document.getElementById('confirmOkBtn');
-                const cancelBtn = document.getElementById('confirmCancelBtn');
-
-                document.getElementById('confirmTitle').textContent = title;
-                document.getElementById('confirmMessage').textContent = message;
-
-                const iconEl = document.getElementById('confirmIcon');
-                iconEl.className = `w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl ${iconColor}`;
-                iconEl.innerHTML = `<i class="${icon}"></i>`;
-
-                okBtn.textContent = okText;
-                okBtn.className = `px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition ${okColor}`;
-
-                modal.classList.remove('hidden');
-
-                function cleanup(result) {
-                    modal.classList.add('hidden');
-                    okBtn.removeEventListener('click', onOk);
-                    cancelBtn.removeEventListener('click', onCancel);
-                    resolve(result);
-                }
-                function onOk() { cleanup(true); }
-                function onCancel() { cleanup(false); }
-
-                okBtn.addEventListener('click', onOk);
-                cancelBtn.addEventListener('click', onCancel);
-            });
-        }
-
         async function loadTechnicians() {
             const list = document.getElementById('technicianList');
             list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">Loading...</li>';
@@ -156,7 +111,7 @@
                 list.innerHTML = technicians.map(t => `
                     <li class="flex items-center justify-between px-4 py-2.5 text-sm">
                         <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span>
-                        <button onclick="deleteTechnician(${t.id}, '${escapeHtml(t.name)}')" class="text-gray-400 hover:text-red-600 transition" aria-label="Delete ${escapeHtml(t.name)}">
+                        <button data-id="${t.id}" data-name="${escapeHtml(t.name)}" onclick="deleteTechnician(Number(this.dataset.id), this.dataset.name)" class="text-gray-400 hover:text-red-600 transition p-2 -m-2" aria-label="Delete ${escapeHtml(t.name)}">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </li>
@@ -232,7 +187,7 @@
                 list.innerHTML = types.map(t => `
                     <li class="flex items-center justify-between px-4 py-2.5 text-sm">
                         <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span>
-                        <button onclick="deleteBreakdownType(${t.id}, '${escapeHtml(t.name)}')" class="text-gray-400 hover:text-red-600 transition" aria-label="Delete ${escapeHtml(t.name)}">
+                        <button data-id="${t.id}" data-name="${escapeHtml(t.name)}" onclick="deleteBreakdownType(Number(this.dataset.id), this.dataset.name)" class="text-gray-400 hover:text-red-600 transition p-2 -m-2" aria-label="Delete ${escapeHtml(t.name)}">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </li>
@@ -308,7 +263,7 @@
                 list.innerHTML = types.map(t => `
                     <li class="flex items-center justify-between px-4 py-2.5 text-sm">
                         <span class="font-semibold text-gray-700">${escapeHtml(t.name)}</span>
-                        <button onclick="deleteServiceType(${t.id}, '${escapeHtml(t.name)}')" class="text-gray-400 hover:text-red-600 transition" aria-label="Delete ${escapeHtml(t.name)}">
+                        <button data-id="${t.id}" data-name="${escapeHtml(t.name)}" onclick="deleteServiceType(Number(this.dataset.id), this.dataset.name)" class="text-gray-400 hover:text-red-600 transition p-2 -m-2" aria-label="Delete ${escapeHtml(t.name)}">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </li>
@@ -371,10 +326,98 @@
             }
         }
 
+
+        const LIFT_TYPE_NAMES = { PL: 'Passenger Lift', SL: 'Service Lift', FSL: 'Freight Service Lift', ES: 'Escalator' };
+
+        async function loadUnitList() {
+            const box = document.getElementById('unitList');
+            box.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">Loading...</p>';
+            try {
+                const response = await fetch(`${API_BASE}/units`);
+                const units = await response.json();
+                if (!units.length) {
+                    box.innerHTML = '<p class="p-4 text-center text-sm text-gray-400">No units added yet.</p>';
+                    return;
+                }
+                document.getElementById('buildingSuggestions').innerHTML = [...new Set(units.map(u => u.building))].map(b => `<option value="${escapeHtml(b)}"></option>`).join('');
+
+                const byBuilding = {};
+                units.forEach(u => { (byBuilding[u.building] = byBuilding[u.building] || []).push(u); });
+                box.innerHTML = Object.keys(byBuilding).sort().map(b => `
+                    <div class="border-b border-gray-100 last:border-b-0">
+                        <div class="bg-gray-50 px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wide">${escapeHtml(b)} <span class="font-normal normal-case">&middot; ${byBuilding[b].length} units</span></div>
+                        <div class="flex flex-wrap gap-2 p-3">
+                            ${byBuilding[b].map(u => `
+                                <span class="inline-flex items-center gap-2 bg-blue-50 text-blue-800 border border-blue-100 rounded-full pl-3 pr-1.5 py-1 text-xs font-semibold" title="${escapeHtml(LIFT_TYPE_NAMES[u.lift_type] || u.lift_type)}">
+                                    ${escapeHtml(u.unit_no)}
+                                    <button data-unit="${escapeHtml(u.unit_no)}" onclick="deleteUnit(this.dataset.unit)" class="text-blue-300 hover:text-red-600 transition p-1.5 -m-1.5" aria-label="Delete ${escapeHtml(u.unit_no)}"><i class="fa-solid fa-circle-xmark"></i></button>
+                                </span>`).join('')}
+                        </div>
+                    </div>`).join('');
+            } catch (err) {
+                console.error(err);
+                box.innerHTML = '<p class="p-4 text-center text-sm text-red-400 font-bold">Failed to load units.</p>';
+            }
+        }
+
+        document.getElementById('addUnitForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const body = {
+                unit_no: document.getElementById('newUnitNo').value.trim(),
+                building: document.getElementById('newUnitBuilding').value.trim(),
+                lift_type: document.getElementById('newUnitType').value
+            };
+            if (!body.unit_no || !body.building) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/units`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (response.ok) {
+                    document.getElementById('newUnitNo').value = '';
+                    loadUnitList();
+                    showToast('Unit added successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        });
+
+        async function deleteUnit(unitNo) {
+            const confirmed = await showConfirm({
+                title: 'Delete unit?',
+                message: `Remove "${unitNo}" from the unit list? This cannot be undone.`,
+                okText: 'Delete',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/units/${encodeURIComponent(unitNo)}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadUnitList();
+                    showToast('Unit deleted successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
         // This settings data is shared across the whole app, so it's admin-only
-        // — same /api/auth/me check sidebar.js uses to trim nav links for
-        // non-admin roles (the 'reports' role can see this page for its own
-        // section, but has no server-side access to these APIs).
+        // — the server already blocks this page and these APIs for other roles;
+        // this check just keeps the lists hidden if one is ever let through.
         fetch(`${API_BASE}/auth/me`)
             .then(r => r.json())
             .then(data => {
@@ -383,6 +426,7 @@
                     loadTechnicians();
                     loadBreakdownTypes();
                     loadServiceTypes();
+                    loadUnitList();
                 }
             })
             .catch(() => {});

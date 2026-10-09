@@ -11,6 +11,7 @@
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
@@ -18,7 +19,7 @@
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Pending Mobile Submissions</h1>
             <div class="flex flex-wrap gap-2">
-                <button onclick="addTestData()" class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg font-bold transition text-sm"><i class="fa-solid fa-plus"></i> Simulate Mobile Input</button>
+                <button id="simulateBtn" onclick="addTestData()" class="hidden bg-green-100 hover:bg-green-200 text-green-700 px-4 py-2 rounded-lg font-bold transition text-sm"><i class="fa-solid fa-plus"></i> Simulate Mobile Input</button>
                 <button onclick="loadPending()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold transition text-sm"><i class="fa-solid fa-rotate-right"></i> Refresh Sync</button>
             </div>
         </div>
@@ -30,10 +31,42 @@
         </div>
     </div>
 
+
+
+    <!-- Photo viewer -->
+    <div id="photoModal" class="fixed inset-0 bg-black/70 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4" onclick="closePhotoModal()">
+        <div class="bg-white p-4 rounded-xl shadow-lg w-full max-w-3xl max-h-[92vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b">
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-camera-retro text-blue-500 mr-2"></i><span id="photoModalTitle">Photos</span></h3>
+                <button onclick="closePhotoModal()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="modalPhotoContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            <p class="text-xs text-center text-gray-400 mt-3 font-semibold">Photos uploaded via the ElevateCare mobile app.</p>
+        </div>
+    </div>
+
     <script>
-        function escapeHtml(str) {
-            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // Opens the photo viewer with the given uploaded filenames (served from /uploads).
+        function openPhotos(filenames, title) {
+            document.getElementById('photoModalTitle').textContent = title || 'Photos';
+            document.getElementById('modalPhotoContainer').innerHTML = filenames.map(f =>
+                `<a href="/uploads/${encodeURIComponent(f)}" target="_blank" rel="noopener"><img src="/uploads/${encodeURIComponent(f)}" alt="Breakdown photo" class="w-full rounded-lg border border-gray-200 object-contain bg-gray-50 max-h-80"></a>`
+            ).join('');
+            document.getElementById('photoModal').classList.remove('hidden');
         }
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.add('hidden');
+        }
+
+        // Category dropdown options for one card, with the app's chosen category pre-selected.
+        function categoryOptionsFor(optionsHtml, selected) {
+            return selected ? optionsHtml.replace(`value="${escapeHtml(selected)}"`, `value="${escapeHtml(selected)}" selected`) : optionsHtml;
+        }
+
+        // Demo-only "Simulate Mobile Input" is shown outside production only.
+        fetch(`${API_BASE}/auth/me`).then(r => r.json()).then(me => {
+            if (me.devMode) document.getElementById('simulateBtn').classList.remove('hidden');
+        }).catch(() => {});
 
         async function loadPending() {
             const container = document.getElementById('pendingContainer');
@@ -79,20 +112,26 @@
                         <div class="flex flex-col md:flex-row gap-6 md:gap-8">
                             <!-- Photo Section -->
                             <div class="w-full sm:w-56 sm:mx-0 mx-auto flex flex-col gap-2">
-                                <div class="h-44 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden relative group cursor-pointer">
-                                    <i class="fa-solid fa-image text-5xl text-gray-300 group-hover:scale-110 transition duration-300"></i>
-                                    <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                                        <span class="text-white text-xs font-bold"><i class="fa-solid fa-magnifying-glass-plus mr-1"></i> View Photo</span>
-                                    </div>
+                                ${(item.photos && item.photos.length) ? `
+                                <div class="grid grid-cols-2 gap-2">
+                                    ${item.photos.slice(0, 4).map((f, idx) => `
+                                        <button type="button" data-photos="${escapeHtml(JSON.stringify(item.photos))}" data-unit="${escapeHtml(item.unit_no)}" onclick="openPhotos(JSON.parse(this.dataset.photos), this.dataset.unit + ' — submission photos')" class="relative h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 group">
+                                            <img src="/uploads/${encodeURIComponent(f)}" alt="Photo ${idx + 1}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                            ${idx === 3 && item.photos.length > 4 ? `<span class="absolute inset-0 bg-black/55 text-white text-sm font-bold flex items-center justify-center">+${item.photos.length - 3}</span>` : ''}
+                                        </button>`).join('')}
                                 </div>
-                                <p class="text-[11px] text-gray-400 text-center"><i class="fa-solid fa-camera mr-1"></i> Uploaded via Mobile App</p>
+                                <p class="text-[11px] text-gray-500 text-center font-semibold"><i class="fa-solid fa-camera mr-1"></i> ${item.photos.length} photo${item.photos.length > 1 ? 's' : ''} from the mobile app</p>`
+                                : `
+                                <div class="h-32 bg-gray-50 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-200 text-gray-300">
+                                    <i class="fa-solid fa-image text-3xl mb-1"></i><span class="text-[11px] font-semibold">No photos attached</span>
+                                </div>`}
                             </div>
-                            
+
                             <!-- Editing Form -->
                             <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                                 
                                 <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Unit No</label>
-                                <input type="text" id="unit-${item.id}" value="${item.unit_no || ''}" class="w-full border-b border-gray-300 bg-blue-50/50 p-1.5 outline-none text-sm font-bold text-blue-700 rounded-t"></div>
+                                <input type="text" id="unit-${item.id}" value="${escapeHtml(item.unit_no)}" class="w-full border-b border-gray-300 bg-blue-50/50 p-1.5 outline-none text-sm font-bold text-blue-700 rounded-t"></div>
                                 
                                 <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Job Status</label>
                                 <select id="status-${item.id}" class="w-full border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm font-bold text-green-600 rounded-t">
@@ -103,32 +142,32 @@
                                 <!-- Category added here for Main DB compatibility -->
                                 <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Category</label>
                                 <select id="cat-${item.id}" class="w-full border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm font-bold text-gray-700 rounded-t">
-                                    ${categoryOptionsHtml}
+                                    ${categoryOptionsFor(categoryOptionsHtml, item.category)}
                                 </select></div>
 
                                 <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Informed By</label>
-                                <input type="text" id="infby-${item.id}" value="${item.informed_by || ''}" class="w-full border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm font-semibold text-gray-800 rounded-t"></div>
+                                <input type="text" id="infby-${item.id}" value="${escapeHtml(item.informed_by)}" class="w-full border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm font-semibold text-gray-800 rounded-t"></div>
                                 
-                                <div class="col-span-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Informed Date & Time</label>
+                                <div class="md:col-span-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Informed Date & Time</label>
                                 <div class="flex gap-2">
                                     <input type="date" id="infdate-${item.id}" value="${informedDate}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
-                                    <input type="time" id="inftime-${item.id}" value="${item.informed_time || ''}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
+                                    <input type="time" id="inftime-${item.id}" value="${escapeHtml(item.informed_time)}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
                                 </div></div>
 
                                 <div><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Attended By (Select Technicians)</label>
                                 <div id="techbox-${item.id}" class="w-full border rounded p-1.5 text-sm bg-gray-50 h-24 overflow-y-auto border-gray-300 shadow-inner">${techCheckboxesHtml}</div></div>
                                 
-                                <div class="col-span-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Attended Date & Time</label>
+                                <div class="md:col-span-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Attended Date & Time</label>
                                 <div class="flex gap-2">
                                     <input type="date" id="attdate-${item.id}" value="${attendedDate}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
-                                    <input type="time" id="atttime-${item.id}" value="${item.attended_time || ''}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
+                                    <input type="time" id="atttime-${item.id}" value="${escapeHtml(item.attended_time)}" class="border-b border-gray-300 bg-gray-50 p-1.5 outline-none text-sm text-gray-700 w-1/2 rounded-t">
                                 </div></div>
 
-                                <div class="col-span-3 mt-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-red-500"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Nature of Breakdown (Raw Entry)</label>
-                                <input type="text" id="nature-${item.id}" value="${item.nature_of_breakdown || ''}" class="w-full border-b-2 border-yellow-400 bg-yellow-50 p-2 outline-none text-sm font-bold text-red-600 rounded-t"></div>
+                                <div class="md:col-span-3 mt-2"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-red-500"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Nature of Breakdown (Raw Entry)</label>
+                                <input type="text" id="nature-${item.id}" value="${escapeHtml(item.nature_of_breakdown)}" class="w-full border-b-2 border-yellow-400 bg-yellow-50 p-2 outline-none text-sm font-bold text-red-600 rounded-t"></div>
                                 
-                                <div class="col-span-3"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Action Taken</label>
-                                <input type="text" id="action-${item.id}" value="${item.actions_taken || ''}" class="w-full border-b border-gray-300 bg-gray-50 p-2 outline-none text-sm font-semibold text-gray-800 rounded-t"></div>
+                                <div class="md:col-span-3"><label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Action Taken</label>
+                                <input type="text" id="action-${item.id}" value="${escapeHtml(item.actions_taken)}" class="w-full border-b border-gray-300 bg-gray-50 p-2 outline-none text-sm font-semibold text-gray-800 rounded-t"></div>
                             </div>
                         </div>
 
@@ -147,16 +186,29 @@
 
         // Approve Function
         async function approveItem(id) {
+            const unitNo = document.getElementById(`unit-${id}`).value.trim();
+            if (!unitNo) { showToast('Unit No is required before approving.', 'error'); return; }
+
+            const confirmed = await showConfirm({
+                title: 'Approve and save?',
+                message: `Save this submission for "${unitNo}" to the main Breakdowns database?`,
+                okText: 'Approve',
+                okColor: 'bg-blue-600 hover:bg-blue-700',
+                icon: 'fa-solid fa-database',
+                iconColor: 'bg-blue-100 text-blue-600'
+            });
+            if (!confirmed) return;
+
             const payload = {
-                unit_no: document.getElementById(`unit-${id}`).value,
+                unit_no: unitNo,
                 job_status: document.getElementById(`status-${id}`).value,
                 category: document.getElementById(`cat-${id}`).value,
                 informed_by: document.getElementById(`infby-${id}`).value,
                 informed_date: document.getElementById(`infdate-${id}`).value,
                 informed_time: document.getElementById(`inftime-${id}`).value,
                 attended_by: Array.from(document.querySelectorAll(`#techbox-${id} input:checked`)).map(cb => cb.value).join(' / '),
-                attended_date: document.getElementById(`attdate-${id}`).value,
-                attended_time: document.getElementById(`atttime-${id}`).value,
+                attended_date: document.getElementById(`attdate-${id}`).value || null,
+                attended_time: document.getElementById(`atttime-${id}`).value || null,
                 nature_of_breakdown: document.getElementById(`nature-${id}`).value,
                 actions_taken: document.getElementById(`action-${id}`).value
             };
@@ -167,30 +219,57 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                
+
                 if (response.ok) {
-                    alert('Success! Saved to main Breakdowns database.');
-                    loadPending(); // Refresh list
+                    showToast('Submission approved and saved!', 'success');
+                    loadPending(); // Refresh list (also refreshes the nav badge)
+                } else {
+                    const result = await response.json().catch(() => ({}));
+                    showToast(result.error || GENERIC_ERROR, 'error');
                 }
             } catch (error) {
-                alert('Error saving data!');
+                console.error(error);
+                showToast(GENERIC_ERROR, 'error');
             }
         }
 
         // Discard Function
         async function discardItem(id) {
-            if(!confirm("Are you sure you want to discard this submission?")) return;
+            const confirmed = await showConfirm({
+                title: 'Discard submission?',
+                message: 'Discard this mobile submission? This cannot be undone.',
+                okText: 'Discard',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
             try {
-                await fetch(`${API_BASE}/pending/${id}`, { method: 'DELETE' });
-                loadPending();
+                const response = await fetch(`${API_BASE}/pending/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showToast('Submission discarded.', 'success');
+                    loadPending();
+                } else {
+                    const result = await response.json().catch(() => ({}));
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
             } catch (error) {
-                alert('Error discarding data.');
+                console.error(error);
+                showToast(GENERIC_ERROR, 'error');
             }
         }
 
-        // Dummy Data Injector
+        // Dummy Data Injector (development only)
         async function addTestData() {
-            await fetch(`${API_BASE}/pending/test`, { method: 'POST' });
+            try {
+                const response = await fetch(`${API_BASE}/pending/test`, { method: 'POST' });
+                if (!response.ok) { showToast(GENERIC_ERROR, 'error'); return; }
+            } catch (error) {
+                console.error(error);
+                showToast(GENERIC_ERROR, 'error');
+                return;
+            }
             loadPending();
         }
 

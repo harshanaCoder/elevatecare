@@ -11,6 +11,8 @@
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/units.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
@@ -29,7 +31,7 @@
                     <i class="fa-solid fa-plus mr-1"></i> New Breakdown Entry
                 </button>
                 <button onclick="switchTab('history')" id="tab-history" class="tab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> History & Recommended Actions
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i> History
                 </button>
             </div>
 
@@ -64,9 +66,6 @@
                             <label class="block text-xs font-bold text-gray-500 mb-1">1. Select Building *</label>
                             <select id="bldg_select" required class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">-- Choose Building --</option>
-                                <option value="BD_01">BD_01</option>
-                                <option value="BD_02">BD_02</option>
-                                <option value="BD_03">BD_03</option>
                             </select>
                         </div>
                         <div>
@@ -126,10 +125,14 @@
                             <label class="block text-xs font-bold text-gray-500 mb-1">Actions Taken</label>
                             <input type="text" id="actions_taken" placeholder="What was fixed?" class="w-full border rounded p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
+                        <div class="col-span-1 md:col-span-3">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Parts Used (optional — deducts stock on save)</label>
+                            <div id="partsUsedContainer" class="w-full border rounded p-2 text-sm bg-white max-h-32 overflow-y-auto border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 shadow-inner">
+                                <p class="text-xs text-gray-400 p-1">Loading parts...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div id="statusMessage" class="hidden p-3 rounded text-sm font-bold text-center"></div>
 
                 <div class="flex justify-end pt-4 border-t">
                     <button type="submit" id="submitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg shadow-md transition flex items-center gap-2">
@@ -147,15 +150,6 @@
                 <div class="flex flex-wrap gap-3 mb-4 items-center">
                     <select id="historyCategoryFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Category: All</option>
-                        <option>Door System Failure</option>
-                        <option>Minor Breakdown</option>
-                        <option>Electrical / Control Failure</option>
-                        <option>Mechanical Failure</option>
-                        <option>Power Failure</option>
-                        <option>Communication Failure</option>
-                        <option>Safety Error</option>
-                        <option>Major Breakdown</option>
-                        <option>Passenger Entrapment</option>
                     </select>
                     <select id="historyStatusFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Status: All</option>
@@ -178,7 +172,7 @@
                 <p class="text-xs text-gray-400 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>Click a row to see full details.</p>
 
                 <div class="overflow-x-auto rounded-lg border border-gray-100">
-                    <table class="w-full text-left border-collapse min-w-[700px]">
+                    <table class="stack-mobile w-full text-left border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
                                 <th class="py-3 px-4">Date</th>
@@ -193,6 +187,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="historyPagination" class="flex flex-col sm:flex-row justify-between items-center gap-2 mt-3 text-sm"></div>
             </div>
 
             </div>
@@ -234,12 +229,20 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Unit No *</label>
-                        <input type="text" id="edit_unit_no" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-700">
+                        <input type="text" id="edit_unit_no" list="allUnitsList" required autocomplete="off" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-700">
+                        <datalist id="allUnitsList"></datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">Category *</label>
                         <select id="edit_category" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">-- Select Fault Type --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Status *</label>
+                        <select id="edit_job_status" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-semibold">
+                            <option value="Pending">Pending</option>
+                            <option value="Job Done">Job Done</option>
                         </select>
                     </div>
                     <div class="sm:col-span-2">
@@ -264,6 +267,12 @@
                         <label class="block text-xs font-bold text-gray-500 mb-1">Actions Taken</label>
                         <input type="text" id="edit_actions_taken" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Parts Used (stock is adjusted to match this list)</label>
+                        <div id="editPartsUsedContainer" class="w-full border rounded-lg p-2 text-sm bg-white max-h-32 overflow-y-auto border-gray-300 shadow-inner">
+                            <p class="text-xs text-gray-400 p-1">Loading parts...</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
@@ -275,21 +284,7 @@
         </div>
     </div>
 
-    <!-- Confirm / Alert Dialog -->
-    <div id="confirmModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 text-center">
-            <div id="confirmIcon" class="w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl"></div>
-            <h3 id="confirmTitle" class="text-lg font-bold text-gray-800 mb-1"></h3>
-            <p id="confirmMessage" class="text-sm text-gray-500 mb-6"></p>
-            <div class="flex justify-center gap-3">
-                <button id="confirmCancelBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
-                <button id="confirmOkBtn" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition">Confirm</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Toast notifications: bottom of screen, color-coded, auto-dismiss -->
-    <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none w-full px-4"></div>
 
     <script>
         // 0. TABS
@@ -308,23 +303,7 @@
             if (tabName === 'history') loadHistory();
         }
 
-        // 0b. HISTORY & RECOMMENDED ACTIONS
-        // Recommendations are static, category-based guidance (this app has no
-        // diagnostic/ML backend) — a starting checklist for the technician, not
-        // a substitute for their own inspection.
-        const RECOMMENDED_ACTIONS = {
-            'Door System Failure': 'Inspect door sensors and tracks, clean/lubricate rollers, test the door reversal safety edge.',
-            'Minor Breakdown': 'Perform a routine reset and monitor; log for the next scheduled service.',
-            'Electrical / Control Failure': 'Check control panel wiring and fuses; inspect controller/PLC logs for fault codes.',
-            'Mechanical Failure': 'Inspect drive sheave, ropes/belts and brake assembly for wear, noise or vibration.',
-            'Power Failure': 'Verify incoming power supply and ARD (Automatic Rescue Device) battery; check the main breaker.',
-            'Communication Failure': 'Test the intercom/GSM module and check signal wiring between car and machine room.',
-            'Safety Error': 'Test all safety circuits (limit switches, safety gear, governor) before returning to service.',
-            'Major Breakdown': 'Escalate to a senior technician; full inspection required before resuming service.',
-            'Passenger Entrapment': 'Immediate priority — confirm passenger safety, inspect the door lock circuit and safety chain, file an incident report.'
-        };
-        const DEFAULT_RECOMMENDATION = 'Perform a general inspection and consult the unit\'s maintenance log.';
-
+        // 0b. HISTORY
         const CATEGORY_BADGE = {
             'Door System Failure': 'bg-red-100 text-red-700',
             'Minor Breakdown': 'bg-yellow-100 text-yellow-700',
@@ -338,8 +317,24 @@
         };
         const DEFAULT_CATEGORY_BADGE = 'bg-blue-50 text-blue-600';
 
-        function escapeHtml(str) {
-            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // True only when all four values are present and attended is earlier
+        // than informed (blank attended values are fine — job still pending).
+        function attendedBeforeInformed(informedDate, informedTime, attendedDate, attendedTime) {
+            if (!informedDate || !attendedDate) return false;
+            const informed = `${informedDate}T${informedTime || '00:00'}`;
+            const attended = `${attendedDate}T${attendedTime || '00:00'}`;
+            return attended < informed;
+        }
+
+        // informed_date/attended_date come back from MySQL as a full ISO
+        // datetime (e.g. "2026-10-10T00:00:00.000Z") — this strips it down to
+        // just the date for display. Safe regardless of viewer timezone:
+        // the source is already UTC-midnight-anchored, so round-tripping
+        // through toISOString() doesn't shift it.
+        function toDateStr(d) {
+            if (!d) return '';
+            const dateObj = new Date(d);
+            return isNaN(dateObj) ? String(d) : dateObj.toISOString().split('T')[0];
         }
 
         // Technician checkboxes (both the new-entry form and the edit modal)
@@ -370,7 +365,7 @@
         // Breakdown categories come from Settings (shared list) instead of
         // being hardcoded here — keeps this list, Pending's and Reports' in sync.
         async function loadBreakdownTypeOptions() {
-            const selects = [document.getElementById('category'), document.getElementById('edit_category')];
+            const selects = [document.getElementById('category'), document.getElementById('edit_category'), document.getElementById('historyCategoryFilter')];
             try {
                 const response = await fetch(`${API_BASE}/breakdown-types`);
                 const types = await response.json();
@@ -382,65 +377,46 @@
         }
         loadBreakdownTypeOptions();
 
-        // Consistent fallback wording — every add/update/delete error path uses
-        // this same message unless the server gave a more specific one.
-        const GENERIC_ERROR = 'Something went wrong. Please try again.';
-
-        // Success/error feedback: bottom-of-screen toast, colored by type,
-        // auto-dismisses after 3s.
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const styles = { success: 'bg-green-600', error: 'bg-red-600' };
-            const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check';
-
-            const toast = document.createElement('div');
-            toast.className = `pointer-events-auto ${styles[type] || styles.success} text-white px-5 py-3 rounded-lg shadow-lg text-sm font-semibold flex items-center gap-2 opacity-0 transition-opacity duration-300 max-w-md`;
-            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
-            container.appendChild(toast);
-
-            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        // Parts available to record as "used" (New Entry form and Edit modal
+        // both get their own copy, with different checkbox/qty classes —
+        // tech-checkbox/edit-tech-checkbox above do the same split — because
+        // the edit modal stays in the DOM even while hidden, so a shared
+        // class name would let a checked box in one form leak into the
+        // other's submit payload). The Edit modal is pre-filled with the parts
+        // already on record and the server adjusts stock by the difference, so
+        // saving an edit never deducts the same part twice.
+        function partsUsedRowHtml(p, checkboxClass, qtyClass) {
+            return `<label class="flex items-center justify-between gap-2 mb-1.5 p-1 rounded hover:bg-gray-50">
+                <span class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="${p.id}" class="${checkboxClass} w-4 h-4 text-blue-600 rounded">
+                    <span class="font-semibold text-gray-700">${escapeHtml(p.part_name)}</span>
+                    <span class="text-[11px] text-gray-400">(${p.quantity} in stock)</span>
+                </span>
+                <input type="number" min="1" value="1" data-part-id="${p.id}" class="${qtyClass} w-14 border rounded text-xs p-1 outline-none focus:ring-1 focus:ring-blue-500">
+            </label>`;
         }
 
-        // Promise-based replacement for window.confirm() — resolves true/false,
-        // matches the app's own modal styling instead of the browser's dialog.
-        function showConfirm({ title, message, okText = 'Confirm', okColor = 'bg-blue-600 hover:bg-blue-700', icon = 'fa-solid fa-circle-question', iconColor = 'bg-blue-100 text-blue-600' }) {
-            return new Promise(resolve => {
-                const modal = document.getElementById('confirmModal');
-                const okBtn = document.getElementById('confirmOkBtn');
-                const cancelBtn = document.getElementById('confirmCancelBtn');
-
-                document.getElementById('confirmTitle').textContent = title;
-                document.getElementById('confirmMessage').textContent = message;
-
-                const iconEl = document.getElementById('confirmIcon');
-                iconEl.className = `w-12 h-12 mx-auto mb-4 rounded-full flex items-center justify-center text-xl ${iconColor}`;
-                iconEl.innerHTML = `<i class="${icon}"></i>`;
-
-                okBtn.textContent = okText;
-                okBtn.className = `px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow transition ${okColor}`;
-
-                modal.classList.remove('hidden');
-
-                function cleanup(result) {
-                    modal.classList.add('hidden');
-                    okBtn.removeEventListener('click', onOk);
-                    cancelBtn.removeEventListener('click', onCancel);
-                    resolve(result);
-                }
-                function onOk() { cleanup(true); }
-                function onCancel() { cleanup(false); }
-
-                okBtn.addEventListener('click', onOk);
-                cancelBtn.addEventListener('click', onCancel);
-            });
+        async function loadPartsUsedOptions() {
+            const newContainer = document.getElementById('partsUsedContainer');
+            const editContainer = document.getElementById('editPartsUsedContainer');
+            try {
+                const response = await fetch(`${API_BASE}/parts`);
+                const parts = await response.json();
+                const empty = '<p class="text-xs text-gray-400 p-1">No parts in inventory yet.</p>';
+                newContainer.innerHTML = parts.length ? parts.map(p => partsUsedRowHtml(p, 'part-used-checkbox', 'part-used-qty')).join('') : empty;
+                editContainer.innerHTML = parts.length ? parts.map(p => partsUsedRowHtml(p, 'edit-part-used-checkbox', 'edit-part-used-qty')).join('') : empty;
+            } catch (err) {
+                console.error(err);
+                const failed = '<p class="text-xs text-red-400 p-1">Failed to load parts.</p>';
+                newContainer.innerHTML = failed;
+                editContainer.innerHTML = failed;
+            }
         }
+        loadPartsUsedOptions();
 
         let allBreakdowns = [];
+        let historyCurrentPage = 1;
+        const HISTORY_PAGE_SIZE = 10;
 
         async function loadHistory() {
             const tbody = document.getElementById('historyTableBody');
@@ -457,6 +433,12 @@
         function clearHistoryDateFilter() {
             document.getElementById('historyFromDate').value = '';
             document.getElementById('historyToDate').value = '';
+            historyCurrentPage = 1;
+            renderHistory();
+        }
+
+        function onHistoryFilterChange() {
+            historyCurrentPage = 1;
             renderHistory();
         }
 
@@ -488,13 +470,18 @@
 
             if (!filtered.length) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 font-bold">No breakdowns match your search.</td></tr>';
+                renderPagination('historyPagination', 0, 1, HISTORY_PAGE_SIZE, () => {});
                 return;
             }
 
+            const totalPages = Math.max(1, Math.ceil(filtered.length / HISTORY_PAGE_SIZE));
+            if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
+            const pageRows = filtered.slice((historyCurrentPage - 1) * HISTORY_PAGE_SIZE, historyCurrentPage * HISTORY_PAGE_SIZE);
+
             // Only the essentials show in the row — everything else (nature of
-            // breakdown, attendance, actions taken, recommendation) is in the
-            // detail modal, opened by clicking the row.
-            tbody.innerHTML = filtered.map(row => {
+            // breakdown, attendance, actions taken) is in the detail modal,
+            // opened by clicking the row.
+            tbody.innerHTML = pageRows.map(row => {
                 const dateObj = new Date(row.informed_date);
                 const formattedDate = isNaN(dateObj) ? row.informed_date : dateObj.toISOString().split('T')[0];
                 const categoryClass = CATEGORY_BADGE[row.category] || DEFAULT_CATEGORY_BADGE;
@@ -504,17 +491,22 @@
                     : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-[10px] font-black uppercase"><i class="fa-solid fa-clock mr-1"></i> Pending</span>';
 
                 return `<tr class="hover:bg-gray-50 border-b cursor-pointer" onclick="viewBreakdown(${row.id})">
-                        <td class="py-3 px-4 font-semibold text-gray-700">${escapeHtml(formattedDate)}</td>
-                        <td class="py-3 px-4 font-bold text-blue-600">${escapeHtml(row.unit_no)}</td>
-                        <td class="py-3 px-4"><span class="${categoryClass} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span></td>
-                        <td class="py-3 px-4 text-center">${statusBadge}</td>
-                        <td class="py-3 px-4 text-center">
+                        <td data-label="Date" class="py-3 px-4 font-semibold text-gray-700">${escapeHtml(formattedDate)}</td>
+                        <td data-label="Unit" class="py-3 px-4 font-bold text-blue-600">${escapeHtml(row.unit_no)}</td>
+                        <td data-label="Category" class="py-3 px-4"><span class="${categoryClass} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span></td>
+                        <td data-label="Status" class="py-3 px-4 text-center">${statusBadge}</td>
+                        <td data-label="" class="py-3 px-4 text-center">
                             <button onclick="event.stopPropagation(); openEditModal(${row.id})" class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button onclick="event.stopPropagation(); deleteBreakdown(${row.id})" class="text-red-600 hover:bg-red-50 p-2 rounded-md transition"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             }).join('');
+
+            renderPagination('historyPagination', filtered.length, historyCurrentPage, HISTORY_PAGE_SIZE, (newPage) => {
+                historyCurrentPage = newPage;
+                renderHistory();
+            });
         }
 
         function detailRow(label, value) {
@@ -534,25 +526,43 @@
             const statusBadge = isDone
                 ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-black uppercase"><i class="fa-solid fa-check mr-1"></i> Job Done</span>'
                 : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-black uppercase"><i class="fa-solid fa-clock mr-1"></i> Pending</span>';
-            const recommendation = RECOMMENDED_ACTIONS[row.category] || DEFAULT_RECOMMENDATION;
 
             document.getElementById('viewModalBody').innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     ${detailRow('Unit No', `<span class="font-bold text-blue-600">${escapeHtml(row.unit_no)}</span>`)}
                     ${detailRow('Category', `<span class="${categoryClass} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span>`)}
                     ${detailRow('Status', statusBadge)}
                     ${detailRow('Informed By', escapeHtml(row.informed_by || '—'))}
-                    ${detailRow('Informed On', escapeHtml(row.informed_date || '—') + ' ' + escapeHtml(row.informed_time || ''))}
+                    ${detailRow('Informed On', (row.informed_date ? escapeHtml(toDateStr(row.informed_date)) : '—') + ' ' + escapeHtml(row.informed_time || ''))}
                     ${detailRow('Attended By', escapeHtml(row.attended_by || 'Not assigned'))}
-                    ${detailRow('Attended On', row.attended_date ? escapeHtml(row.attended_date) + ' ' + escapeHtml(row.attended_time || '') : '—')}
+                    ${detailRow('Attended On', row.attended_date ? escapeHtml(toDateStr(row.attended_date)) + ' ' + escapeHtml(row.attended_time || '') : '—')}
                 </div>
                 ${detailRow('Nature of Breakdown', escapeHtml(row.nature_of_breakdown || '—'))}
                 ${detailRow('Actions Taken', escapeHtml(row.actions_taken || '—'))}
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                    <div class="text-xs font-bold text-yellow-700 uppercase tracking-wide"><i class="fa-solid fa-lightbulb mr-1"></i> Recommended Actions</div>
-                    <div class="text-gray-700 mt-1">${escapeHtml(recommendation)}</div>
+                <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1"><i class="fa-solid fa-gear mr-1"></i> Parts Used</div>
+                    <div id="viewPartsUsedSection" class="text-sm text-gray-500">Loading...</div>
                 </div>
             `;
             document.getElementById('viewModal').classList.remove('hidden');
+            loadViewPartsUsed(id);
+        }
+
+        async function loadViewPartsUsed(id) {
+            const section = document.getElementById('viewPartsUsedSection');
+            try {
+                const response = await fetch(`${API_BASE}/breakdowns/${id}/parts-used`);
+                const rows = await response.json();
+                section.innerHTML = rows.length
+                    ? `<ul class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden">${rows.map(r => `
+                        <li class="flex items-center justify-between px-3 py-2 bg-white">
+                            <span class="font-semibold text-gray-700">${escapeHtml(r.part_name)}${r.part_code ? ` <span class="text-gray-400 font-normal">#${escapeHtml(r.part_code)}</span>` : ''}</span>
+                            <span class="text-orange-600 font-bold">-${r.quantity}</span>
+                        </li>`).join('')}</ul>`
+                    : '<span class="text-gray-400">No parts recorded for this breakdown.</span>';
+            } catch (err) {
+                console.error(err);
+                section.innerHTML = '<span class="text-red-400">Failed to load parts used.</span>';
+            }
         }
 
         function closeViewModal() {
@@ -573,14 +583,36 @@
             document.getElementById('edit_attended_date').value = row.attended_date ? row.attended_date.split('T')[0] : '';
             document.getElementById('edit_attended_time').value = row.attended_time || '';
             document.getElementById('edit_actions_taken').value = row.actions_taken || '';
+            document.getElementById('edit_job_status').value = row.job_status === 'Job Done' ? 'Job Done' : 'Pending';
 
             const selectedTechs = (row.attended_by || '').split(' / ').map(t => t.trim());
             document.querySelectorAll('.edit-tech-checkbox').forEach(cb => {
                 cb.checked = selectedTechs.includes(cb.value);
             });
 
+            // Pre-fill Parts Used with what's already on record for this breakdown.
+            document.querySelectorAll('.edit-part-used-checkbox').forEach(cb => { cb.checked = false; });
+            document.querySelectorAll('.edit-part-used-qty').forEach(input => { input.value = 1; });
+            editPartsReady = false;
+            fetch(`${API_BASE}/breakdowns/${id}/parts-used`)
+                .then(r => r.json())
+                .then(used => {
+                    used.forEach(u => {
+                        const cb = document.querySelector(`.edit-part-used-checkbox[value="${u.part_id}"]`);
+                        const qty = document.querySelector(`.edit-part-used-qty[data-part-id="${u.part_id}"]`);
+                        if (cb) cb.checked = true;
+                        if (qty) qty.value = Number(u.quantity);
+                    });
+                    editPartsReady = true;
+                })
+                .catch(err => { console.error(err); showToast('Could not load the parts already recorded — please close and reopen this form.', 'error'); });
+
             document.getElementById('editModal').classList.remove('hidden');
         }
+
+        // Guards the Update button until the existing parts list has loaded —
+        // saving before then would tell the server "no parts" and return them all.
+        let editPartsReady = false;
 
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
@@ -591,6 +623,13 @@
 
             const id = document.getElementById('edit_id').value;
             const unitNo = document.getElementById('edit_unit_no').value.trim();
+
+            if (!editPartsReady) { showToast('Still loading the recorded parts — please try again in a moment.', 'error'); return; }
+            if (attendedBeforeInformed(document.getElementById('edit_informed_date').value, document.getElementById('edit_informed_time').value,
+                                       document.getElementById('edit_attended_date').value, document.getElementById('edit_attended_time').value)) {
+                showToast('Attended date/time cannot be before the informed date/time.', 'error');
+                return;
+            }
 
             const confirmed = await showConfirm({
                 title: 'Save changes?',
@@ -612,14 +651,16 @@
                 informed_by: document.getElementById('edit_informed_by').value.trim(),
                 unit_no: unitNo,
                 category: document.getElementById('edit_category').value,
-                // No status picker here — filling in attended date/time/by and
-                // actions taken via this edit form means the job is done.
-                job_status: 'Job Done',
+                job_status: document.getElementById('edit_job_status').value,
                 nature_of_breakdown: document.getElementById('edit_nature_of_breakdown').value.trim(),
                 attended_date: document.getElementById('edit_attended_date').value || null,
                 attended_time: document.getElementById('edit_attended_time').value || null,
                 attended_by: Array.from(document.querySelectorAll('.edit-tech-checkbox:checked')).map(cb => cb.value).join(' / '),
-                actions_taken: document.getElementById('edit_actions_taken').value.trim()
+                actions_taken: document.getElementById('edit_actions_taken').value.trim(),
+                parts_used: Array.from(document.querySelectorAll('.edit-part-used-checkbox:checked')).map(cb => ({
+                    part_id: parseInt(cb.value, 10),
+                    quantity: parseInt(document.querySelector(`.edit-part-used-qty[data-part-id="${cb.value}"]`).value, 10) || 1
+                }))
             };
 
             try {
@@ -633,6 +674,7 @@
                 if (response.ok) {
                     closeEditModal();
                     loadHistory();
+                    loadPartsUsedOptions(); // refresh stock counts shown next to each part
                     showToast('Breakdown updated successfully!', 'success');
                 } else {
                     showToast(result.error || GENERIC_ERROR, 'error');
@@ -652,7 +694,7 @@
 
             const confirmed = await showConfirm({
                 title: 'Delete breakdown?',
-                message: `Delete the breakdown record for "${row.unit_no}"? This cannot be undone.`,
+                message: `Delete the breakdown record for "${row.unit_no}"? Any parts recorded on it go back to stock. This cannot be undone.`,
                 okText: 'Delete',
                 okColor: 'bg-red-600 hover:bg-red-700',
                 icon: 'fa-solid fa-trash',
@@ -664,6 +706,7 @@
                 const response = await fetch(`${API_BASE}/breakdowns/${id}`, { method: 'DELETE' });
                 if (response.ok) {
                     loadHistory();
+                    loadPartsUsedOptions(); // deleting returns its parts to stock
                     showToast('Breakdown deleted successfully!', 'success');
                 } else {
                     const result = await response.json();
@@ -675,11 +718,11 @@
             }
         }
 
-        document.getElementById('historySearchInput').addEventListener('input', renderHistory);
-        document.getElementById('historyCategoryFilter').addEventListener('change', renderHistory);
-        document.getElementById('historyStatusFilter').addEventListener('change', renderHistory);
-        document.getElementById('historyFromDate').addEventListener('change', renderHistory);
-        document.getElementById('historyToDate').addEventListener('change', renderHistory);
+        document.getElementById('historySearchInput').addEventListener('input', onHistoryFilterChange);
+        document.getElementById('historyCategoryFilter').addEventListener('change', onHistoryFilterChange);
+        document.getElementById('historyStatusFilter').addEventListener('change', onHistoryFilterChange);
+        document.getElementById('historyFromDate').addEventListener('change', onHistoryFilterChange);
+        document.getElementById('historyToDate').addEventListener('change', onHistoryFilterChange);
 
         // 0c. ACTION-TAKEN TOGGLE — hides the Action & Attendance section until
         // ticked, and doubles as the job_status the record is saved with:
@@ -692,26 +735,23 @@
         });
 
         // 1. DYNAMIC DROPDOWNS LOGIC
-        const liftData = {
-            "BD_01": {
-                "PL": ["PL 1.01", "PL 1.02", "PL 1.03", "PL 1.04", "PL 1.05", "PL 1.06", "PL 1.07", "PL 1.08"],
-                "SL": ["SL 1.01", "SL 1.02"],
-                "ES": ["ES 1.03a", "ES 1.03b", "ES 1.04a", "ES 1.04b"]
-            },
-            "BD_02": {
-                "PL": ["PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36"],
-                "SL": ["SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09"],
-                "FSL": ["FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08"],
-                "ES": ["ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"]
-            },
-            "BD_03": {
-                "PL": ["PL 3.01", "PL 3.02", "PL 3.03", "PL 3.04"],
-                "FSL": ["FSL 3.01", "FSL 3.02", "FSL 3.03", "FSL 3.04", "FSL 3.05", "FSL 3.06"],
-                "ES": ["ES 3.01a", "ES 3.01b", "ES 3.02a", "ES 3.02b", "ES 3.03a", "ES 3.03b"]
-            }
-        };
+        let liftData = {};
 
         const bldgSelect = document.getElementById('bldg_select');
+        const allUnitNames = () => Object.values(liftData).flatMap(cats => Object.values(cats).flat());
+
+        // Units come from the master list (Settings → Units): fills the Building
+        // dropdown, and the Edit modal's Unit No suggestions so a typo can't slip in.
+        loadUnits().then(data => {
+            liftData = data;
+            Object.keys(liftData).sort().forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = b;
+                bldgSelect.appendChild(opt);
+            });
+            document.getElementById('allUnitsList').innerHTML = allUnitNames().map(u => `<option value="${escapeHtml(u)}"></option>`).join('');
+        });
         const typeSelect = document.getElementById('type_select');
         const unitSelect = document.getElementById('unit_no');
 
@@ -756,11 +796,22 @@
 
         // 2. DATABASE SUBMISSION LOGIC
         document.getElementById('breakdownForm').addEventListener('submit', async function(event) {
-            event.preventDefault(); 
-            
+            event.preventDefault();
+
             const btn = document.getElementById('submitBtn');
-            const statusDiv = document.getElementById('statusMessage');
-            
+
+            if (actionTakenToggle.checked) {
+                if (!document.querySelector('.tech-checkbox:checked')) {
+                    showToast('Select at least one technician under "Attended By".', 'error');
+                    return;
+                }
+                if (attendedBeforeInformed(document.getElementById('informed_date').value, document.getElementById('informed_time').value,
+                                           document.getElementById('attended_date').value, document.getElementById('attended_time').value)) {
+                    showToast('Attended date/time cannot be before the informed date/time.', 'error');
+                    return;
+                }
+            }
+
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
             btn.disabled = true;
 
@@ -775,7 +826,11 @@
                 attended_time: document.getElementById('attended_time').value || null,
                 attended_by: Array.from(document.querySelectorAll('.tech-checkbox:checked')).map(cb => cb.value).join(' / '),
                 job_status: actionTakenToggle.checked ? 'Job Done' : 'Pending',
-                actions_taken: document.getElementById('actions_taken').value
+                actions_taken: document.getElementById('actions_taken').value,
+                parts_used: Array.from(document.querySelectorAll('.part-used-checkbox:checked')).map(cb => ({
+                    part_id: parseInt(cb.value, 10),
+                    quantity: parseInt(document.querySelector(`.part-used-qty[data-part-id="${cb.value}"]`).value, 10) || 1
+                }))
             };
 
             try {
@@ -788,29 +843,27 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-green-100 text-green-700 block mt-4";
-                    statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + result.message;
+                    showToast('Breakdown saved successfully!', 'success');
                     document.getElementById('breakdownForm').reset();
-                    
+
                     // Reset dropdowns explicitly
                     typeSelect.innerHTML = '<option value="">-- Choose Type --</option>';
                     unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
                     typeSelect.disabled = true;
                     unitSelect.disabled = true;
                     document.querySelectorAll('.tech-checkbox').forEach(cb => cb.checked = false);
+                    document.querySelectorAll('.part-used-checkbox').forEach(cb => cb.checked = false);
+                    loadPartsUsedOptions(); // refresh stock counts shown next to each part
                     actionAttendanceSection.classList.add('hidden');
                 } else {
-                    statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block mt-4";
-                    statusDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Error: ' + result.error;
+                    showToast(result.error || GENERIC_ERROR, 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                statusDiv.className = "p-3 rounded text-sm font-bold text-center bg-red-100 text-red-700 block mt-4";
-                statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Server error! Is Node.js running?';
+                showToast(GENERIC_ERROR, 'error');
             } finally {
                 btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save';
                 btn.disabled = false;
-                setTimeout(() => { statusDiv.classList.add('hidden'); }, 4000);
             }
         });
     </script>

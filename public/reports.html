@@ -6,7 +6,7 @@
     <title>Analytics & Reports - ElevateCare</title>
     <link rel="stylesheet" href="css/tailwind.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
@@ -14,15 +14,26 @@
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/units.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
     <div class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto pb-12">
 
         <div class="mb-6">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Breakdown Analytics</h1>
-            <p class="text-gray-500">Analyze faults by building, lift type, category and time period.</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Analytics &amp; Reports</h1>
+            <p id="reportSubtitle" class="text-gray-500">Analyze faults by building, lift type, category and time period.</p>
         </div>
+
+        <!-- Report tabs: Services and Parts are admin-only (shown once /auth/me confirms the role) -->
+        <div id="reportTabs" class="hidden flex border-b border-gray-200 mb-6 gap-4 sm:gap-6 overflow-x-auto">
+            <button onclick="switchReportTab('breakdowns')" id="rtab-btn-breakdowns" class="rtab-btn pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Breakdowns</button>
+            <button onclick="switchReportTab('services')" id="rtab-btn-services" class="rtab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800 whitespace-nowrap"><i class="fa-solid fa-screwdriver-wrench mr-1"></i> Services</button>
+            <button onclick="switchReportTab('parts')" id="rtab-btn-parts" class="rtab-btn pb-3 text-sm font-bold text-gray-500 hover:text-gray-800 whitespace-nowrap"><i class="fa-solid fa-gear mr-1"></i> Spare Parts</button>
+        </div>
+
+        <div id="rtab-breakdowns">
 
         <!-- Filters -->
         <div class="bg-white p-5 rounded-xl shadow-sm mb-4 border border-gray-100">
@@ -39,9 +50,6 @@
                     <label class="block text-xs font-bold text-gray-500 mb-1">Building</label>
                     <select id="buildingFilter" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
                         <option value="">All Buildings</option>
-                        <option value="BD_01">BD_01</option>
-                        <option value="BD_02">BD_02</option>
-                        <option value="BD_03">BD_03</option>
                     </select>
                 </div>
                 <div>
@@ -113,7 +121,7 @@
                 <p id="statDone" class="text-3xl font-black text-green-600 mt-1">0</p>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Avg Resolution Time</p>
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Avg Response Time</p>
                 <p id="statAvgRes" class="text-3xl font-black text-blue-600 mt-1">N/A</p>
             </div>
         </div>
@@ -152,7 +160,7 @@
             <div class="p-4 bg-gray-50 border-b border-gray-200">
                 <h3 class="font-bold text-gray-700">Detailed Breakdown Log</h3>
             </div>
-            <table class="w-full text-left border-collapse min-w-[900px]">
+            <table class="stack-mobile w-full text-left border-collapse min-w-[900px]">
                 <thead>
                     <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b">
                         <th class="py-3 px-4 font-bold">Date & Time</th>
@@ -167,6 +175,98 @@
                 </thead>
                 <tbody id="breakdownLogTable" class="divide-y divide-gray-100 text-sm text-gray-700"></tbody>
             </table>
+            <div id="logPagination" class="flex flex-col sm:flex-row justify-between items-center gap-2 p-4 text-sm"></div>
+        </div>
+        </div><!-- /rtab-breakdowns -->
+
+        <!-- ================= SERVICES REPORT ================= -->
+        <div id="rtab-services" class="hidden">
+            <div class="bg-white p-5 rounded-xl shadow-sm mb-4 border border-gray-100">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">From Date</label><input type="date" id="svcFrom" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">To Date</label><input type="date" id="svcTo" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"></div>
+                    <button onclick="renderServicesReport()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-filter"></i> Apply</button>
+                    <button onclick="setServicesRange('month')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-calendar-day"></i> This Month</button>
+                    <button onclick="setServicesRange('all')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-rotate"></i> All Time</button>
+                    <button onclick="downloadServicesCSV()" class="sm:ml-auto bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-file-csv"></i> Download CSV</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Total Services</p><p id="svcTotal" class="text-3xl font-black text-gray-800 mt-1">0</p></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Completed</p><p id="svcCompleted" class="text-3xl font-black text-green-600 mt-1">0</p></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Upcoming</p><p id="svcUpcoming" class="text-3xl font-black text-blue-600 mt-1">0</p></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Overdue</p><p id="svcOverdue" class="text-3xl font-black text-red-500 mt-1">0</p></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 col-span-2 lg:col-span-1"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Completion Rate</p><p id="svcRate" class="text-3xl font-black text-indigo-600 mt-1">N/A</p></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2 flex flex-col">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Services per Month</h3>
+                    <div class="relative flex-1 w-full min-h-[260px]"><canvas id="svcMonthChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">By Service Type</h3>
+                    <div id="svcTypeList" class="space-y-2 h-[260px] overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Technician Workload</h3>
+                    <div id="svcTechList" class="space-y-2 max-h-[300px] overflow-y-auto pr-2"></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Overdue Services</h3>
+                    <div id="svcOverdueList" class="space-y-2 max-h-[300px] overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SPARE PARTS REPORT ================= -->
+        <div id="rtab-parts" class="hidden">
+            <div class="bg-white p-5 rounded-xl shadow-sm mb-4 border border-gray-100">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Usage From</label><input type="date" id="partsFrom" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Usage To</label><input type="date" id="partsTo" class="border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-gray-700"></div>
+                    <button onclick="renderPartsReport()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-filter"></i> Apply</button>
+                    <button onclick="setPartsRange('month')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-calendar-day"></i> This Month</button>
+                    <button onclick="setPartsRange('all')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-rotate"></i> All Time</button>
+                    <button onclick="downloadPartsCSV()" class="sm:ml-auto bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-file-csv"></i> Download CSV</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Parts Tracked</p><p id="partsTotal" class="text-3xl font-black text-gray-800 mt-1">0</p></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Low Stock</p><p id="partsLow" class="text-3xl font-black text-orange-500 mt-1">0</p></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Out of Stock</p><p id="partsOut" class="text-3xl font-black text-red-500 mt-1">0</p></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"><p class="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Units Used (period)</p><p id="partsUsedTotal" class="text-3xl font-black text-blue-600 mt-1">0</p></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2 flex flex-col">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Most Used Parts</h3>
+                    <div class="relative flex-1 w-full min-h-[280px]"><canvas id="partsUsageChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b pb-2">Needs Reordering</h3>
+                    <div id="partsReorderList" class="space-y-2 h-[280px] overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+                <div class="p-4 bg-gray-50 border-b border-gray-200"><h3 class="font-bold text-gray-700">Parts Used in Period</h3></div>
+                <table class="w-full text-left border-collapse min-w-[560px]">
+                    <thead><tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b">
+                        <th class="py-3 px-4 font-bold">Part</th>
+                        <th class="py-3 px-4 font-bold text-center">On Breakdowns</th>
+                        <th class="py-3 px-4 font-bold text-center">On Services</th>
+                        <th class="py-3 px-4 font-bold text-center">Total Used</th>
+                        <th class="py-3 px-4 font-bold text-center">In Stock Now</th>
+                    </tr></thead>
+                    <tbody id="partsUsageTable" class="divide-y divide-gray-100 text-sm text-gray-700"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -176,6 +276,8 @@
         let allBreakdowns = [];
         let currentFilteredData = [];
         let currentPeriodLabel = 'All Time';
+        let logCurrentPage = 1;
+        const LOG_PAGE_SIZE = 10;
 
         const styleMap = {
             'Door System Failure': { border: 'border-red-500', text: 'text-red-500', bg: 'bg-red-100 text-red-700', hex: '#EF4444' },
@@ -193,40 +295,29 @@
         // Same building/category master data the Lifts and Breakdowns pages use
         // for their dropdowns — the breakdowns table only stores unit_no as free
         // text, so this is how Building/Lift Type get derived for filtering.
-        const liftData = {
-            "BD_01": {
-                "PL": ["PL 1.01", "PL 1.02", "PL 1.03", "PL 1.04", "PL 1.05", "PL 1.06", "PL 1.07", "PL 1.08"],
-                "SL": ["SL 1.01", "SL 1.02"],
-                "ES": ["ES 1.03a", "ES 1.03b", "ES 1.04a", "ES 1.04b"]
-            },
-            "BD_02": {
-                "PL": ["PL 2.03", "PL 2.04", "PL 2.06", "PL 2.07", "PL 2.08", "PL 2.09", "PL 2.10", "PL 2.11", "PL 2.12", "PL 2.13", "PL 2.14", "PL 2.15", "PL 2.16", "PL 2.17", "PL 2.18", "PL 2.19", "PL 2.20", "PL 2.21", "PL 2.24", "PL 2.25", "PL 2.28", "PL 2.32", "PL 2.33", "PL 2.34", "PL 2.35", "PL 2.36"],
-                "SL": ["SL 2.01", "SL 2.02", "SL 2.03", "SL 2.07", "SL 2.08", "SL 2.09"],
-                "FSL": ["FSL 2.01", "FSL 2.02", "FSL 2.03", "FSL 2.04", "FSL 2.05", "FSL 2.06", "FSL 2.07", "FSL 2.08"],
-                "ES": ["ES 2.01a", "ES 2.01b", "ES 2.02", "ES 2.03a", "ES 2.03b", "ES 2.04a", "ES 2.04b", "ES 2.06a", "ES 2.06b", "ES 2.07a", "ES 2.07b", "ES 01", "ES 02"]
-            },
-            "BD_03": {
-                "PL": ["PL 3.01", "PL 3.02", "PL 3.03", "PL 3.04"],
-                "FSL": ["FSL 3.01", "FSL 3.02", "FSL 3.03", "FSL 3.04", "FSL 3.05", "FSL 3.06"],
-                "ES": ["ES 3.01a", "ES 3.01b", "ES 3.02a", "ES 3.02b", "ES 3.03a", "ES 3.03b"]
-            }
-        };
+        let liftData = {};
 
-        const BUILDING_COLORS = { 'BD_01': '#3B82F6', 'BD_02': '#F97316', 'BD_03': '#14B8A6', 'Unknown': '#9CA3AF' };
+        const BUILDING_PALETTE = ['#3B82F6', '#F97316', '#14B8A6', '#8B5CF6', '#EC4899', '#EAB308'];
         const LIFT_TYPE_LABELS = { PL: 'Passenger Lift (PL)', SL: 'Service Lift (SL)', FSL: 'Freight Service Lift (FSL)', ES: 'Escalator (ES)' };
 
-        // Reverse-lookup maps built once from liftData, so filtering/grouping
-        // by building or lift type doesn't need to re-scan liftData per row.
+        // Reverse-lookup maps built once the master unit list has loaded, so
+        // filtering/grouping by building or lift type doesn't re-scan per row.
         const unitToBuilding = {};
         const unitToLiftType = {};
-        Object.entries(liftData).forEach(([building, categories]) => {
-            Object.entries(categories).forEach(([cat, units]) => {
-                units.forEach(u => { unitToBuilding[u] = building; unitToLiftType[u] = cat; });
+        function buildUnitMaps() {
+            Object.entries(liftData).forEach(([building, categories]) => {
+                Object.entries(categories).forEach(([cat, units]) => {
+                    units.forEach(u => { unitToBuilding[u] = building; unitToLiftType[u] = cat; });
+                });
             });
-        });
+            const buildingSelect = document.getElementById('buildingFilter');
+            Object.keys(liftData).sort().forEach(b => buildingSelect.insertAdjacentHTML('beforeend', `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`));
+        }
 
-        function escapeHtml(str) {
-            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        function buildingColor(building) {
+            const names = Object.keys(liftData).sort();
+            const i = names.indexOf(building);
+            return i === -1 ? '#9CA3AF' : BUILDING_PALETTE[i % BUILDING_PALETTE.length];
         }
 
         function toDateStr(d) {
@@ -235,7 +326,8 @@
             return isNaN(dateObj) ? '' : dateObj.toISOString().split('T')[0];
         }
 
-        // Hours between informed and attended timestamps — null if either is
+        // Hours between informed and attended timestamps (response time — when
+        // the technician attended, not necessarily when the repair finished) — null if either is
         // missing (e.g. still Pending), so it's excluded from the average.
         function resolutionHours(row) {
             if (!row.attended_date || !row.attended_time || !row.informed_date || !row.informed_time) return null;
@@ -278,6 +370,8 @@
 
         async function loadAllData() {
             try {
+                liftData = await loadUnits();
+                buildUnitMaps();
                 const [response, catResponse] = await Promise.all([
                     fetch(`${API_BASE}/all-breakdowns`),
                     fetch(`${API_BASE}/breakdown-types`)
@@ -335,6 +429,7 @@
             currentPeriodLabel = labelParts.join(' · ');
 
             currentFilteredData = filtered;
+            logCurrentPage = 1;
             renderAll(filtered);
         }
 
@@ -363,9 +458,10 @@
             document.getElementById('statAvgRes').textContent = formatAvgRes(avgRes);
 
             if (total === 0) {
-                document.getElementById('categorySummaryGrid').innerHTML = '<div class="col-span-2 text-center py-10 text-gray-500 font-bold">No data found.</div>';
+                document.getElementById('categorySummaryGrid').innerHTML = '<div class="sm:col-span-2 text-center py-10 text-gray-500 font-bold">No data found.</div>';
                 document.getElementById('topUnitsList').innerHTML = '<div class="text-center py-10 text-gray-400 font-bold">No data found.</div>';
                 document.getElementById('breakdownLogTable').innerHTML = '<tr><td colspan="8" class="text-center py-6 text-gray-500">No records found.</td></tr>';
+                renderPagination('logPagination', 0, 1, LOG_PAGE_SIZE, () => {});
                 if (categoryChartInstance) categoryChartInstance.destroy();
                 if (buildingChartInstance) buildingChartInstance.destroy();
                 return;
@@ -410,14 +506,14 @@
         }
 
         function renderBuildingChart(data) {
-            const counts = { BD_01: 0, BD_02: 0, BD_03: 0, Unknown: 0 };
+            const counts = {};
             data.forEach(row => {
                 const b = unitToBuilding[row.unit_no] || 'Unknown';
                 counts[b] = (counts[b] || 0) + 1;
             });
             const labels = Object.keys(counts).filter(b => counts[b] > 0);
             const values = labels.map(b => counts[b]);
-            const colors = labels.map(b => BUILDING_COLORS[b] || '#9CA3AF');
+            const colors = labels.map(b => buildingColor(b));
 
             if (buildingChartInstance) buildingChartInstance.destroy();
             buildingChartInstance = new Chart(document.getElementById('buildingChart').getContext('2d'), {
@@ -449,8 +545,12 @@
         }
 
         function renderTable(data) {
+            const totalPages = Math.max(1, Math.ceil(data.length / LOG_PAGE_SIZE));
+            if (logCurrentPage > totalPages) logCurrentPage = totalPages;
+            const pageRows = data.slice((logCurrentPage - 1) * LOG_PAGE_SIZE, logCurrentPage * LOG_PAGE_SIZE);
+
             let tableHTML = '';
-            data.forEach(row => {
+            pageRows.forEach(row => {
                 const style = styleMap[row.category] || styleMap['Default'];
                 const building = unitToBuilding[row.unit_no] || '—';
                 const liftType = unitToLiftType[row.unit_no] ? LIFT_TYPE_LABELS[unitToLiftType[row.unit_no]] : '—';
@@ -459,26 +559,31 @@
                     : '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold">Pending</span>';
 
                 tableHTML += `<tr class="hover:bg-gray-50 border-b">
-                        <td class="py-3 px-4">
+                        <td data-label="Date & Time" class="py-3 px-4">
                             <span class="font-semibold text-gray-800">${toDateStr(row.informed_date)}</span><br>
                             <span class="text-xs text-gray-500">${escapeHtml(row.informed_time)}</span>
                         </td>
-                        <td class="py-3 px-4 font-bold text-blue-600">${escapeHtml(row.unit_no)}</td>
-                        <td class="py-3 px-4 text-xs font-semibold text-gray-600">${building}</td>
-                        <td class="py-3 px-4 text-xs font-semibold text-gray-600">${liftType}</td>
-                        <td class="py-3 px-4"><span class="${style.bg} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span></td>
-                        <td class="py-3 px-4">
+                        <td data-label="Unit" class="py-3 px-4 font-bold text-blue-600">${escapeHtml(row.unit_no)}</td>
+                        <td data-label="Building" class="py-3 px-4 text-xs font-semibold text-gray-600">${building}</td>
+                        <td data-label="Lift Type" class="py-3 px-4 text-xs font-semibold text-gray-600">${liftType}</td>
+                        <td data-label="Category" class="py-3 px-4"><span class="${style.bg} px-2 py-1 rounded text-xs font-bold">${escapeHtml(row.category)}</span></td>
+                        <td data-label="Nature" class="py-3 px-4">
                             <span class="block text-gray-800">${escapeHtml(row.nature_of_breakdown)}</span>
                             <span class="block text-xs text-green-600 mt-1"><i class="fa-solid fa-wrench"></i> Action: ${escapeHtml(row.actions_taken || 'Pending')}</span>
                         </td>
-                        <td class="py-3 px-4 text-center">${statusBadge}</td>
-                        <td class="py-3 px-4 text-center font-semibold text-gray-600 bg-gray-50">
+                        <td data-label="Status" class="py-3 px-4 text-center">${statusBadge}</td>
+                        <td data-label="Attended By" class="py-3 px-4 text-center font-semibold text-gray-600 bg-gray-50">
                             ${row.attended_by ? `<span class="bg-gray-200/80 text-gray-700 px-2 py-1 rounded text-xs border border-gray-300 shadow-sm inline-block"><i class="fa-solid fa-user-gear text-gray-500 mr-1"></i>${escapeHtml(row.attended_by)}</span>` : '<span class="text-xs text-red-500 font-bold"><i class="fa-solid fa-circle-minus mr-1"></i>Not Assigned</span>'}
                         </td>
                     </tr>
                 `;
             });
             document.getElementById('breakdownLogTable').innerHTML = tableHTML;
+
+            renderPagination('logPagination', data.length, logCurrentPage, LOG_PAGE_SIZE, (newPage) => {
+                logCurrentPage = newPage;
+                renderTable(data);
+            });
         }
 
         function csvEscape(val) {
@@ -487,7 +592,7 @@
         }
 
         function downloadCSV() {
-            if (!currentFilteredData.length) { alert('No data to export for the current filters.'); return; }
+            if (!currentFilteredData.length) { showToast('No data to export for the current filters.', 'error'); return; }
 
             const headers = ['Date', 'Time', 'Unit No', 'Building', 'Lift Type', 'Category', 'Nature of Breakdown', 'Status', 'Attended By', 'Actions Taken'];
             const rows = currentFilteredData.map(row => [
@@ -510,7 +615,7 @@
         }
 
         function downloadPDF() {
-            if (!currentFilteredData.length) { alert('No data to export for the current filters.'); return; }
+            if (!currentFilteredData.length) { showToast('No data to export for the current filters.', 'error'); return; }
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'landscape' });
@@ -530,7 +635,7 @@
 
             doc.setFontSize(10);
             doc.setTextColor(30);
-            doc.text(`Total: ${total}    Pending: ${pending}    Job Done: ${done}    Avg Resolution: ${formatAvgRes(avgRes)}`, 14, 33);
+            doc.text(`Total: ${total}    Pending: ${pending}    Job Done: ${done}    Avg Response: ${formatAvgRes(avgRes)}`, 14, 33);
 
             doc.autoTable({
                 startY: 38,
@@ -546,6 +651,261 @@
             });
 
             doc.save(`ElevateCare_Breakdown_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // ================= TABS (Services / Parts are admin-only) =================
+        let svcLoaded = false, partsLoaded = false;
+        let allServicesData = [], allPartsData = [];
+        let svcMonthChartInstance = null, partsChartInstance = null;
+        let svcCurrentRows = [], partsUsageRows = [];
+
+        function switchReportTab(name) {
+            ['breakdowns', 'services', 'parts'].forEach(t => {
+                document.getElementById('rtab-' + t).classList.toggle('hidden', t !== name);
+                const btn = document.getElementById('rtab-btn-' + t);
+                btn.classList.toggle('text-blue-600', t === name);
+                btn.classList.toggle('border-b-2', t === name);
+                btn.classList.toggle('border-blue-600', t === name);
+                btn.classList.toggle('text-gray-500', t !== name);
+            });
+            document.getElementById('reportSubtitle').textContent = {
+                breakdowns: 'Analyze faults by building, lift type, category and time period.',
+                services: 'Track maintenance completion, overdue work and technician workload.',
+                parts: 'Monitor spare-parts consumption and what needs reordering.'
+            }[name];
+            if (name === 'services' && !svcLoaded) initServicesReport();
+            if (name === 'parts' && !partsLoaded) initPartsReport();
+        }
+
+        // Admin-only tabs: the server blocks /api/services and /api/parts for other roles anyway.
+        fetch(`${API_BASE}/auth/me`).then(r => r.json()).then(me => {
+            if (me.role === 'admin') document.getElementById('reportTabs').classList.remove('hidden');
+        }).catch(() => {});
+
+        function localTodayStr() {
+            const n = new Date();
+            return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+        }
+
+        // ================= SERVICES REPORT =================
+        async function initServicesReport() {
+            try {
+                const response = await fetch(`${API_BASE}/services`);
+                allServicesData = await response.json();
+                svcLoaded = true;
+                setServicesRange('month');
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        function setServicesRange(which) {
+            if (which === 'month') {
+                const { from, to } = currentMonthRange();
+                document.getElementById('svcFrom').value = from;
+                document.getElementById('svcTo').value = to;
+            } else {
+                document.getElementById('svcFrom').value = '';
+                document.getElementById('svcTo').value = '';
+            }
+            renderServicesReport();
+        }
+
+        function renderServicesReport() {
+            const from = document.getElementById('svcFrom').value;
+            const to = document.getElementById('svcTo').value;
+            const today = localTodayStr();
+
+            const rows = allServicesData.filter(r => {
+                const d = toDateStr(r.service_date);
+                return (!from || d >= from) && (!to || d <= to);
+            });
+            svcCurrentRows = rows;
+
+            const completed = rows.filter(r => r.status === 'Completed');
+            const open = rows.filter(r => r.status !== 'Completed');
+            const overdue = open.filter(r => toDateStr(r.service_date) < today);
+
+            document.getElementById('svcTotal').textContent = rows.length;
+            document.getElementById('svcCompleted').textContent = completed.length;
+            document.getElementById('svcUpcoming').textContent = open.length - overdue.length;
+            document.getElementById('svcOverdue').textContent = overdue.length;
+            document.getElementById('svcRate').textContent = rows.length ? `${Math.round((completed.length / rows.length) * 100)}%` : 'N/A';
+
+            // per month
+            const byMonth = {};
+            rows.forEach(r => {
+                const key = toDateStr(r.service_date).slice(0, 7);
+                byMonth[key] = byMonth[key] || { done: 0, notDone: 0 };
+                r.status === 'Completed' ? byMonth[key].done++ : byMonth[key].notDone++;
+            });
+            const months = Object.keys(byMonth).sort();
+            if (svcMonthChartInstance) svcMonthChartInstance.destroy();
+            svcMonthChartInstance = new Chart(document.getElementById('svcMonthChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: 'Completed', data: months.map(m => byMonth[m].done), backgroundColor: '#16A34A', borderRadius: 4 },
+                        { label: 'Not completed', data: months.map(m => byMonth[m].notDone), backgroundColor: '#F59E0B', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+
+            // per service type
+            const byType = {};
+            rows.forEach(r => {
+                byType[r.service_type] = byType[r.service_type] || { total: 0, done: 0 };
+                byType[r.service_type].total++;
+                if (r.status === 'Completed') byType[r.service_type].done++;
+            });
+            const typeNames = Object.keys(byType).sort((a, b) => byType[b].total - byType[a].total);
+            document.getElementById('svcTypeList').innerHTML = typeNames.length ? typeNames.map(t => `
+                <div class="bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                    <div class="flex justify-between items-center"><span class="font-bold text-gray-700 text-sm">${escapeHtml(t)}</span><span class="text-sm font-black text-gray-800">${byType[t].total}</span></div>
+                    <p class="text-[11px] text-gray-400">${byType[t].done} completed</p>
+                </div>`).join('') : '<div class="text-center py-10 text-gray-400 font-bold">No services in this period.</div>';
+
+            // technician workload (a service can have several technicians: "A / B")
+            const byTech = {};
+            rows.forEach(r => (r.technicians || '').split(' / ').map(t => t.trim()).filter(Boolean).forEach(t => {
+                byTech[t] = byTech[t] || { total: 0, done: 0 };
+                byTech[t].total++;
+                if (r.status === 'Completed') byTech[t].done++;
+            }));
+            const techNames = Object.keys(byTech).sort((a, b) => byTech[b].total - byTech[a].total);
+            const maxTech = techNames.length ? byTech[techNames[0]].total : 1;
+            document.getElementById('svcTechList').innerHTML = techNames.length ? techNames.map(t => `
+                <div>
+                    <div class="flex justify-between text-sm"><span class="font-bold text-gray-700">${escapeHtml(t)}</span><span class="text-gray-500">${byTech[t].done}/${byTech[t].total} done</span></div>
+                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden mt-1"><div class="h-2 bg-blue-500 rounded-full" style="width:${Math.round((byTech[t].total / maxTech) * 100)}%"></div></div>
+                </div>`).join('') : '<div class="text-center py-10 text-gray-400 font-bold">No assignments in this period.</div>';
+
+            // overdue list (oldest first, with days late)
+            const lateDays = r => Math.round((Date.UTC(...today.split('-').map((n, i) => i === 1 ? n - 1 : +n)) - Date.UTC(...toDateStr(r.service_date).split('-').map((n, i) => i === 1 ? n - 1 : +n))) / 86400000);
+            document.getElementById('svcOverdueList').innerHTML = overdue.length ? [...overdue].sort((a, b) => toDateStr(a.service_date).localeCompare(toDateStr(b.service_date))).map(r => `
+                <div class="flex justify-between items-center bg-red-50/60 border border-red-100 rounded-lg px-3 py-2">
+                    <div><span class="font-black text-red-700 text-sm block">${escapeHtml(r.unit_no)}</span><span class="text-xs text-gray-500">${escapeHtml(r.service_type)} &middot; due ${toDateStr(r.service_date)}</span></div>
+                    <span class="text-[11px] font-bold text-red-600 whitespace-nowrap">${lateDays(r)} day${lateDays(r) === 1 ? '' : 's'} late</span>
+                </div>`).join('') : '<div class="text-center py-10 text-green-600 font-bold">Nothing overdue in this period.</div>';
+        }
+
+        function downloadServicesCSV() {
+            if (!svcCurrentRows.length) { showToast('No data to export for the current filters.', 'error'); return; }
+            const headers = ['Scheduled Date', 'Completed Date', 'Unit No', 'Service Type', 'Technicians', 'Status', 'Repeats (months)', 'Notes'];
+            const rows = svcCurrentRows.map(r => [toDateStr(r.service_date), toDateStr(r.completed_date), r.unit_no, r.service_type, r.technicians || '', r.status, r.recurrence_months || '', r.notes || '']);
+            downloadCsvFile(`ElevateCare_Services_Report_${localTodayStr()}.csv`, headers, rows);
+        }
+
+        // ================= SPARE PARTS REPORT =================
+        async function initPartsReport() {
+            try {
+                const response = await fetch(`${API_BASE}/parts`);
+                allPartsData = await response.json();
+                partsLoaded = true;
+                setPartsRange('month');
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        function setPartsRange(which) {
+            if (which === 'month') {
+                const { from, to } = currentMonthRange();
+                document.getElementById('partsFrom').value = from;
+                document.getElementById('partsTo').value = to;
+            } else {
+                document.getElementById('partsFrom').value = '';
+                document.getElementById('partsTo').value = '';
+            }
+            renderPartsReport();
+        }
+
+        async function renderPartsReport() {
+            const from = document.getElementById('partsFrom').value;
+            const to = document.getElementById('partsTo').value;
+
+            try {
+                const [partsRes, usageRes] = await Promise.all([
+                    fetch(`${API_BASE}/parts`),
+                    fetch(`${API_BASE}/parts-usage?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
+                ]);
+                allPartsData = await partsRes.json();
+                partsUsageRows = await usageRes.json();
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+                return;
+            }
+
+            const low = allPartsData.filter(p => p.quantity > 0 && p.quantity <= p.low_stock_threshold);
+            const out = allPartsData.filter(p => p.quantity <= 0);
+            const usedTotal = partsUsageRows.reduce((sum, r) => sum + r.used_breakdowns + r.used_services, 0);
+
+            document.getElementById('partsTotal').textContent = allPartsData.length;
+            document.getElementById('partsLow').textContent = low.length;
+            document.getElementById('partsOut').textContent = out.length;
+            document.getElementById('partsUsedTotal').textContent = usedTotal;
+
+            const top = partsUsageRows.slice(0, 8);
+            if (partsChartInstance) partsChartInstance.destroy();
+            partsChartInstance = new Chart(document.getElementById('partsUsageChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: top.map(r => r.part_name),
+                    datasets: [
+                        { label: 'On breakdowns', data: top.map(r => r.used_breakdowns), backgroundColor: '#EF4444', borderRadius: 4 },
+                        { label: 'On services', data: top.map(r => r.used_services), backgroundColor: '#3B82F6', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }, y: { stacked: true } }
+                }
+            });
+
+            const needs = [...out, ...low];
+            document.getElementById('partsReorderList').innerHTML = needs.length ? needs.map(p => `
+                <div class="flex justify-between items-center border rounded-lg px-3 py-2 ${p.quantity <= 0 ? 'bg-red-50/60 border-red-100' : 'bg-orange-50/60 border-orange-100'}">
+                    <div><span class="font-bold text-gray-800 text-sm block">${escapeHtml(p.part_name)}</span>
+                        <span class="text-[11px] text-gray-500">${p.quantity} left (alert at ${p.low_stock_threshold})${p.reorder_status === 'Ordered' ? ' &middot; <span class="text-blue-600 font-bold">Ordered' + (p.reorder_expected_date ? ' (exp. ' + toDateStr(p.reorder_expected_date) + ')' : '') + '</span>' : ''}</span></div>
+                    <span class="text-[10px] font-black uppercase ${p.quantity <= 0 ? 'text-red-600' : 'text-orange-600'}">${p.quantity <= 0 ? 'Out' : 'Low'}</span>
+                </div>`).join('') : '<div class="text-center py-10 text-green-600 font-bold">All parts are above their alert level.</div>';
+
+            document.getElementById('partsUsageTable').innerHTML = partsUsageRows.length ? partsUsageRows.map(r => `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-4"><span class="font-bold text-gray-800">${escapeHtml(r.part_name)}</span>${r.part_code ? ` <span class="text-xs text-gray-400">#${escapeHtml(r.part_code)}</span>` : ''}</td>
+                    <td class="py-3 px-4 text-center">${r.used_breakdowns}</td>
+                    <td class="py-3 px-4 text-center">${r.used_services}</td>
+                    <td class="py-3 px-4 text-center font-black">${r.used_breakdowns + r.used_services}</td>
+                    <td class="py-3 px-4 text-center">${r.in_stock}</td>
+                </tr>`).join('') : '<tr><td colspan="5" class="text-center py-8 text-gray-400 font-bold">No parts were used in this period.</td></tr>';
+        }
+
+        function downloadPartsCSV() {
+            if (!partsUsageRows.length) { showToast('No data to export for the current filters.', 'error'); return; }
+            const headers = ['Part', 'Part Code', 'Used On Breakdowns', 'Used On Services', 'Total Used', 'In Stock Now'];
+            const rows = partsUsageRows.map(r => [r.part_name, r.part_code || '', r.used_breakdowns, r.used_services, r.used_breakdowns + r.used_services, r.in_stock]);
+            downloadCsvFile(`ElevateCare_Parts_Usage_${localTodayStr()}.csv`, headers, rows);
+        }
+
+        function downloadCsvFile(filename, headers, rows) {
+            const csvContent = [headers, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
         }
 
         window.onload = loadAllData;

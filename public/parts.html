@@ -11,6 +11,7 @@
 
     <div id="sidebar-root"></div>
     <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/footer.js"></script>
 
@@ -19,96 +20,801 @@
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Spare Parts Inventory</h1>
-                <p class="text-gray-500">Manage elevator components and monitor stock levels.</p>
+                <p class="text-gray-500">Manage elevator &amp; escalator components and monitor stock levels.</p>
             </div>
-            <button class="bg-gray-800 hover:bg-black text-white font-semibold px-5 py-2.5 rounded-lg shadow flex items-center justify-center gap-2 transition">
-                <i class="fa-solid fa-plus"></i> Add New Part
-            </button>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="downloadCsvTemplate()" class="bg-white hover:bg-gray-50 text-gray-700 font-semibold px-5 py-2.5 rounded-lg shadow border border-gray-200 flex items-center justify-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-download"></i> CSV Template
+                </button>
+                <button onclick="document.getElementById('csvFileInput').click()" class="bg-white hover:bg-gray-50 text-gray-700 font-semibold px-5 py-2.5 rounded-lg shadow border border-gray-200 flex items-center justify-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-file-csv"></i> Import CSV
+                </button>
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                <button onclick="openAddModal()" class="bg-gray-800 hover:bg-black text-white font-semibold px-5 py-2.5 rounded-lg shadow flex items-center justify-center gap-2 transition whitespace-nowrap">
+                    <i class="fa-solid fa-plus"></i> Add New Part
+                </button>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-blue-500">
                 <h3 class="text-gray-500 text-xs font-bold uppercase mb-1">Total Unique Parts</h3>
-                <p class="text-3xl font-bold text-gray-800">145</p>
+                <p id="statTotalParts" class="text-3xl font-bold text-gray-800">0</p>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-red-500 bg-red-50">
                 <h3 class="text-red-500 text-xs font-bold uppercase mb-1">Low Stock Alerts</h3>
-                <p class="text-3xl font-bold text-red-600">5 <span class="text-sm font-normal text-gray-500">items</span></p>
-            </div>
-            <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-green-500">
-                <h3 class="text-gray-500 text-xs font-bold uppercase mb-1">Stock Value</h3>
-                <p class="text-3xl font-bold text-gray-800">Rs. 450,000</p>
+                <p id="statLowStock" class="text-3xl font-bold text-red-600">0 <span class="text-sm font-normal text-gray-500">items</span></p>
             </div>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col sm:flex-row gap-4 sm:items-center border border-gray-100">
             <div class="relative flex-1">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400"></i>
-                <input type="text" placeholder="Search part name, ID or category..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <input type="text" id="searchInput" placeholder="Search part name, code or category..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
             </div>
-            <select class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Category: All</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Mechanical">Mechanical</option>
-                <option value="Sensors">Sensors</option>
+            <select id="equipmentFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Equipment: All</option>
+                <option value="Elevator">Elevator</option>
+                <option value="Escalator">Escalator</option>
+            </select>
+            <select id="statusFilter" class="border rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Status: All</option>
+                <option value="In Stock">In Stock</option>
+                <option value="Low Stock">Low Stock</option>
+                <option value="Out of Stock">Out of Stock</option>
             </select>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[640px]">
+            <table class="stack-mobile w-full text-left border-collapse min-w-[760px]">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
                         <th class="py-4 px-6 font-bold">Part Details</th>
                         <th class="py-4 px-6 font-bold">Category</th>
                         <th class="py-4 px-6 font-bold text-center">Stock Level</th>
-                        <th class="py-4 px-6 font-bold">Unit Price</th>
                         <th class="py-4 px-6 font-bold text-center">Status</th>
+                        <th class="py-4 px-6 font-bold text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
-                    
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-4 px-6">
-                            <span class="font-bold text-gray-900 block">Heavy Duty Suspension Cable (10m)</span>
-                            <span class="text-xs text-gray-500">Part ID: #CAB-0092</span>
-                        </td>
-                        <td class="py-4 px-6 text-gray-600">Mechanical</td>
-                        <td class="py-4 px-6 text-center font-bold text-gray-800">24</td>
-                        <td class="py-4 px-6 text-gray-600">Rs. 15,000</td>
-                        <td class="py-4 px-6 text-center">
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">In Stock</span>
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-red-50 bg-red-50/20">
-                        <td class="py-4 px-6">
-                            <span class="font-bold text-gray-900 block">Car Door Micro Switch</span>
-                            <span class="text-xs text-gray-500">Part ID: #SEN-0104</span>
-                        </td>
-                        <td class="py-4 px-6 text-gray-600">Sensors</td>
-                        <td class="py-4 px-6 text-center font-bold text-red-600">2</td>
-                        <td class="py-4 px-6 text-gray-600">Rs. 4,500</td>
-                        <td class="py-4 px-6 text-center">
-                            <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold animate-pulse">Low Stock</span>
-                        </td>
-                    </tr>
-
-                    <tr class="hover:bg-gray-50 opacity-70">
-                        <td class="py-4 px-6">
-                            <span class="font-bold text-gray-900 block">Main Control Board V2</span>
-                            <span class="text-xs text-gray-500">Part ID: #ELC-0055</span>
-                        </td>
-                        <td class="py-4 px-6 text-gray-600">Electrical</td>
-                        <td class="py-4 px-6 text-center font-bold text-gray-500">0</td>
-                        <td class="py-4 px-6 text-gray-600">Rs. 85,000</td>
-                        <td class="py-4 px-6 text-center">
-                            <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">Out of Stock</span>
-                        </td>
-                    </tr>
-
+                <tbody id="partsTableBody" class="divide-y divide-gray-100 text-sm text-gray-700">
+                    <tr><td colspan="5" class="text-center py-10 text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</td></tr>
                 </tbody>
             </table>
+            <div id="partsPagination" class="flex flex-col sm:flex-row justify-between items-center gap-2 p-4 text-sm"></div>
         </div>
     </div>
+
+    <!-- Add / Edit Part Modal -->
+    <div id="partModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <form id="partForm" class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="partModalTitle" class="text-lg font-bold text-gray-800">Add New Part</h3>
+                    <button type="button" onclick="closePartModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <input type="hidden" id="part_id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Part Name *</label>
+                        <input type="text" id="part_name" required placeholder="e.g. Heavy Duty Suspension Cable (10m)" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Part Code</label>
+                        <input type="text" id="part_code" placeholder="e.g. CAB-0092" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Equipment Type *</label>
+                        <select id="equipment_type" required class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select Equipment --</option>
+                            <option value="Elevator">Elevator</option>
+                            <option value="Escalator">Escalator</option>
+                        </select>
+                    </div>
+                    <div id="subTypeWrap" class="hidden">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Sub-Type *</label>
+                        <select id="sub_type" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select Sub-Type --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Discipline *</label>
+                        <select id="discipline" required disabled class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                            <option value="">-- Select Discipline --</option>
+                        </select>
+                    </div>
+                    <div id="locationWrap" class="hidden">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Location *</label>
+                        <select id="location" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select Location --</option>
+                        </select>
+                    </div>
+                    <div id="quantityWrap">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Initial Quantity</label>
+                        <input type="number" id="quantity" min="0" value="0" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-[11px] text-gray-400 mt-1">After creating the part, stock only changes via Stock In / Stock Out — not by editing this field.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Low Stock Threshold *</label>
+                        <input type="number" id="low_stock_threshold" min="0" required value="5" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Notes</label>
+                        <textarea id="notes" rows="2" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-5 mt-2 border-t">
+                    <button type="button" onclick="closePartModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" id="partSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition">
+                        <i class="fa-solid fa-check mr-1"></i> Save Part
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stock In / Stock Out Modal -->
+    <div id="stockModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+            <form id="stockForm" class="p-6">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 id="stockModalTitle" class="text-lg font-bold text-gray-800">Stock In</h3>
+                    <button type="button" onclick="closeStockModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <p id="stockModalPartName" class="text-sm text-gray-500 mb-4"></p>
+                <input type="hidden" id="stock_part_id">
+                <input type="hidden" id="stock_type">
+
+                <label class="block text-xs font-bold text-gray-500 mb-1">Quantity *</label>
+                <input type="number" id="stock_quantity" min="1" required value="1" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 mb-3">
+
+                <label class="block text-xs font-bold text-gray-500 mb-1">Reason</label>
+                <input type="text" id="stock_reason" placeholder="e.g. Restocked from supplier" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
+                <div class="flex justify-end gap-2 pt-5 mt-2 border-t">
+                    <button type="button" onclick="closeStockModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" id="stockSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stock History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-bold text-gray-800">Stock History</h3>
+                    <button type="button" onclick="closeHistoryModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <p id="historyModalPartName" class="text-sm text-gray-500 mb-4"></p>
+                <ul id="historyList" class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark as Ordered Modal -->
+    <div id="reorderModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm">
+            <form id="reorderForm" class="p-6">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-bold text-gray-800">Mark as Ordered</h3>
+                    <button type="button" onclick="closeReorderModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <p id="reorderPartName" class="text-sm text-gray-500 mb-4"></p>
+                <input type="hidden" id="reorder_part_id">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Expected restock date (optional)</label>
+                <input type="date" id="reorder_expected_date" class="w-full border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="flex justify-end gap-2 pt-5 mt-2 border-t">
+                    <button type="button" onclick="closeReorderModal()" class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" id="reorderSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition">Mark as Ordered</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CSV Import Result Modal -->
+    <div id="importResultModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-bold text-gray-800">CSV Import Result</h3>
+                    <button type="button" onclick="closeImportResultModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <p id="importResultSummary" class="text-sm text-gray-500 mb-4"></p>
+                <ul id="importResultList" class="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden"></ul>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        // Fixed taxonomy from the org's own category chart — Elevator parts
+        // go 4 levels deep (sub-type and location both apply), Escalator
+        // parts only go 2 (straight to discipline, no sub-type or location).
+        const PART_CATEGORY_TREE = {
+            'Elevator': {
+                'WB': {
+                    'Electrical': ['Machine Room', 'Car', 'Shaft'],
+                    'Mechanical': ['Machine Room', 'Car', 'Shaft']
+                },
+                'SUVF': {
+                    'Electrical': ['Machine Room', 'Car', 'Shaft'],
+                    'Mechanical': ['Machine Room', 'Car', 'Shaft']
+                }
+            },
+            'Escalator': {
+                'Electrical': [],
+                'Mechanical': []
+            }
+        };
+
+        let allParts = [];
+        let partsCurrentPage = 1;
+        const PARTS_PAGE_SIZE = 10;
+
+        function toDateStr(d) {
+            if (!d) return '';
+            const dateObj = new Date(d);
+            return isNaN(dateObj) ? String(d) : dateObj.toISOString().split('T')[0];
+        }
+
+        // ---------- Cascading category selects (shared by add + edit) ----------
+        function populateSelect(sel, options, placeholder) {
+            sel.innerHTML = `<option value="">${placeholder}</option>` + options.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+        }
+
+        function onEquipmentChange() {
+            const equip = document.getElementById('equipment_type').value;
+            const subTypeWrap = document.getElementById('subTypeWrap');
+            const subTypeSel = document.getElementById('sub_type');
+            const discSel = document.getElementById('discipline');
+            const locWrap = document.getElementById('locationWrap');
+            const locSel = document.getElementById('location');
+
+            subTypeSel.value = '';
+            locSel.innerHTML = '<option value="">-- Select Location --</option>';
+            locWrap.classList.add('hidden');
+
+            if (equip === 'Elevator') {
+                subTypeWrap.classList.remove('hidden');
+                populateSelect(subTypeSel, Object.keys(PART_CATEGORY_TREE.Elevator), '-- Select Sub-Type --');
+                discSel.innerHTML = '<option value="">-- Select Discipline --</option>';
+                discSel.disabled = true;
+            } else if (equip === 'Escalator') {
+                subTypeWrap.classList.add('hidden');
+                populateSelect(discSel, Object.keys(PART_CATEGORY_TREE.Escalator), '-- Select Discipline --');
+                discSel.disabled = false;
+            } else {
+                subTypeWrap.classList.add('hidden');
+                discSel.innerHTML = '<option value="">-- Select Discipline --</option>';
+                discSel.disabled = true;
+            }
+        }
+
+        function onSubTypeChange() {
+            const sub = document.getElementById('sub_type').value;
+            const discSel = document.getElementById('discipline');
+            const locWrap = document.getElementById('locationWrap');
+            const locSel = document.getElementById('location');
+
+            locSel.innerHTML = '<option value="">-- Select Location --</option>';
+            locWrap.classList.add('hidden');
+
+            if (sub && PART_CATEGORY_TREE.Elevator[sub]) {
+                populateSelect(discSel, Object.keys(PART_CATEGORY_TREE.Elevator[sub]), '-- Select Discipline --');
+                discSel.disabled = false;
+            } else {
+                discSel.innerHTML = '<option value="">-- Select Discipline --</option>';
+                discSel.disabled = true;
+            }
+        }
+
+        function onDisciplineChange() {
+            const equip = document.getElementById('equipment_type').value;
+            const sub = document.getElementById('sub_type').value;
+            const disc = document.getElementById('discipline').value;
+            const locWrap = document.getElementById('locationWrap');
+            const locSel = document.getElementById('location');
+
+            if (equip === 'Elevator' && sub && disc && PART_CATEGORY_TREE.Elevator[sub][disc]) {
+                populateSelect(locSel, PART_CATEGORY_TREE.Elevator[sub][disc], '-- Select Location --');
+                locWrap.classList.remove('hidden');
+            } else {
+                locWrap.classList.add('hidden');
+                locSel.value = '';
+            }
+        }
+
+        document.getElementById('equipment_type').addEventListener('change', onEquipmentChange);
+        document.getElementById('sub_type').addEventListener('change', onSubTypeChange);
+        document.getElementById('discipline').addEventListener('change', onDisciplineChange);
+
+        // ---------- Modal open/close ----------
+        function resetPartForm() {
+            document.getElementById('partForm').reset();
+            document.getElementById('part_id').value = '';
+            document.getElementById('subTypeWrap').classList.add('hidden');
+            document.getElementById('locationWrap').classList.add('hidden');
+            document.getElementById('discipline').innerHTML = '<option value="">-- Select Discipline --</option>';
+            document.getElementById('discipline').disabled = true;
+        }
+
+        function openAddModal() {
+            resetPartForm();
+            document.getElementById('partModalTitle').textContent = 'Add New Part';
+            document.getElementById('quantityWrap').classList.remove('hidden');
+            document.getElementById('partModal').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const row = allParts.find(p => p.id === id);
+            if (!row) return;
+            resetPartForm();
+
+            document.getElementById('partModalTitle').textContent = 'Edit Part';
+            document.getElementById('quantityWrap').classList.add('hidden');
+            document.getElementById('part_id').value = row.id;
+            document.getElementById('part_name').value = row.part_name || '';
+            document.getElementById('part_code').value = row.part_code || '';
+            document.getElementById('low_stock_threshold').value = row.low_stock_threshold;
+            document.getElementById('notes').value = row.notes || '';
+
+            document.getElementById('equipment_type').value = row.equipment_type;
+            onEquipmentChange();
+
+            if (row.equipment_type === 'Elevator') {
+                document.getElementById('sub_type').value = row.sub_type || '';
+                onSubTypeChange();
+            }
+            document.getElementById('discipline').value = row.discipline || '';
+            onDisciplineChange();
+            if (row.location) document.getElementById('location').value = row.location;
+
+            document.getElementById('partModal').classList.remove('hidden');
+        }
+
+        function closePartModal() {
+            document.getElementById('partModal').classList.add('hidden');
+        }
+
+        // ---------- Load + render ----------
+        async function loadParts() {
+            try {
+                const response = await fetch(`${API_BASE}/parts`);
+                allParts = await response.json();
+                renderParts();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('partsTableBody').innerHTML = '<tr><td colspan="5" class="text-center py-10 text-red-500 font-bold">Failed to load parts.</td></tr>';
+            }
+        }
+
+        function categoryPath(row) {
+            const path = [row.equipment_type];
+            if (row.sub_type) path.push(row.sub_type);
+            path.push(row.discipline);
+            if (row.location) path.push(row.location);
+            return path.join(' › ');
+        }
+
+        function partStatus(row) {
+            if (row.quantity <= 0) return { label: 'Out of Stock', cls: 'bg-gray-200 text-gray-600' };
+            if (row.quantity <= row.low_stock_threshold) return { label: 'Low Stock', cls: 'bg-red-100 text-red-700 animate-pulse' };
+            return { label: 'In Stock', cls: 'bg-green-100 text-green-700' };
+        }
+
+        function renderParts() {
+            const term = document.getElementById('searchInput').value.trim().toLowerCase();
+            const equipFilter = document.getElementById('equipmentFilter').value;
+            const statusFilterVal = document.getElementById('statusFilter').value;
+
+            const filtered = allParts.filter(row => {
+                const matchesTerm = !term ||
+                    (row.part_name || '').toLowerCase().includes(term) ||
+                    (row.part_code || '').toLowerCase().includes(term) ||
+                    categoryPath(row).toLowerCase().includes(term);
+                const matchesEquip = !equipFilter || row.equipment_type === equipFilter;
+                const matchesStatus = !statusFilterVal || partStatus(row).label === statusFilterVal;
+                return matchesTerm && matchesEquip && matchesStatus;
+            });
+
+            document.getElementById('statTotalParts').textContent = allParts.length;
+            document.getElementById('statLowStock').innerHTML = `${allParts.filter(r => partStatus(r).label === 'Low Stock').length} <span class="text-sm font-normal text-gray-500">items</span>`;
+
+            const tbody = document.getElementById('partsTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400 font-bold">No parts found.</td></tr>';
+                renderPagination('partsPagination', 0, 1, PARTS_PAGE_SIZE, () => {});
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(filtered.length / PARTS_PAGE_SIZE));
+            if (partsCurrentPage > totalPages) partsCurrentPage = totalPages;
+            const pageRows = filtered.slice((partsCurrentPage - 1) * PARTS_PAGE_SIZE, partsCurrentPage * PARTS_PAGE_SIZE);
+
+            tbody.innerHTML = pageRows.map(row => {
+                const status = partStatus(row);
+                const nameJs = escapeHtml(row.part_name).replace(/'/g, "\\'");
+                const needsReorder = status.label !== 'In Stock';
+
+                let reorderHtml = '';
+                if (row.reorder_status === 'Ordered') {
+                    const expected = row.reorder_expected_date ? ` (exp. ${toDateStr(row.reorder_expected_date)})` : '';
+                    reorderHtml = `<div class="mt-1"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold">Ordered${expected}</span>
+                        <button onclick="cancelReorder(${row.id})" class="text-[10px] text-gray-400 hover:text-red-500 ml-1 underline">cancel</button></div>`;
+                } else if (needsReorder) {
+                    reorderHtml = `<div class="mt-1"><button onclick="markAsOrdered(${row.id})" class="text-[10px] text-blue-600 hover:text-blue-800 underline font-semibold">Mark as Ordered</button></div>`;
+                }
+
+                return `<tr class="hover:bg-gray-50">
+                    <td data-label="" class="py-4 px-6">
+                        <span class="font-bold text-gray-900 block">${escapeHtml(row.part_name)}</span>
+                        ${row.part_code ? `<span class="text-xs text-gray-500">#${escapeHtml(row.part_code)}</span>` : ''}
+                    </td>
+                    <td data-label="Category" class="py-4 px-6 text-gray-600 text-xs font-semibold">${escapeHtml(categoryPath(row))}</td>
+                    <td data-label="Stock" class="py-4 px-6 text-center font-bold ${row.quantity <= 0 ? 'text-gray-500' : row.quantity <= row.low_stock_threshold ? 'text-red-600' : 'text-gray-800'}">${row.quantity}</td>
+                    <td data-label="Status" class="py-4 px-6 text-center">
+                        <span class="${status.cls} px-3 py-1 rounded-full text-xs font-bold">${status.label}</span>
+                        ${reorderHtml}
+                    </td>
+                    <td data-label="" class="py-4 px-6 text-center whitespace-nowrap">
+                        <button onclick="openStockModal(${row.id}, 'IN')" title="Stock In" class="text-green-600 hover:bg-green-50 p-2 rounded-md transition"><i class="fa-solid fa-plus"></i></button>
+                        <button onclick="openStockModal(${row.id}, 'OUT')" title="Stock Out" class="text-orange-600 hover:bg-orange-50 p-2 rounded-md transition"><i class="fa-solid fa-minus"></i></button>
+                        <button onclick="openHistoryModal(${row.id})" title="Stock History" class="text-gray-500 hover:bg-gray-100 p-2 rounded-md transition"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                        <button onclick="openEditModal(${row.id})" title="Edit" class="text-blue-600 hover:bg-blue-50 p-2 rounded-md transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deletePart(${row.id}, '${nameJs}')" title="Delete" class="text-red-600 hover:bg-red-50 p-2 rounded-md transition"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            renderPagination('partsPagination', filtered.length, partsCurrentPage, PARTS_PAGE_SIZE, (newPage) => {
+                partsCurrentPage = newPage;
+                renderParts();
+            });
+        }
+
+        function onPartsFilterChange() {
+            partsCurrentPage = 1;
+            renderParts();
+        }
+        document.getElementById('searchInput').addEventListener('input', onPartsFilterChange);
+        document.getElementById('equipmentFilter').addEventListener('change', onPartsFilterChange);
+        document.getElementById('statusFilter').addEventListener('change', onPartsFilterChange);
+
+        // ---------- Add / Edit submit ----------
+        document.getElementById('partForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const id = document.getElementById('part_id').value;
+            const payload = {
+                part_name: document.getElementById('part_name').value.trim(),
+                part_code: document.getElementById('part_code').value.trim(),
+                equipment_type: document.getElementById('equipment_type').value,
+                sub_type: document.getElementById('sub_type').value,
+                discipline: document.getElementById('discipline').value,
+                location: document.getElementById('location').value,
+                low_stock_threshold: parseInt(document.getElementById('low_stock_threshold').value, 10) || 0,
+                notes: document.getElementById('notes').value.trim()
+            };
+            if (!id) payload.initial_quantity = parseInt(document.getElementById('quantity').value, 10) || 0;
+
+            const btn = document.getElementById('partSubmitBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/parts${id ? '/' + id : ''}`, {
+                    method: id ? 'PATCH' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    closePartModal();
+                    loadParts();
+                    showToast(id ? 'Part updated successfully!' : 'Part added successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Save Part';
+                btn.disabled = false;
+            }
+        });
+
+        // ---------- Delete ----------
+        async function deletePart(id, name) {
+            const confirmed = await showConfirm({
+                title: 'Delete part?',
+                message: `Delete "${name}" from inventory? This cannot be undone.`,
+                okText: 'Delete',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-trash',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/parts/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadParts();
+                    showToast('Part deleted successfully!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        // ---------- Stock In / Stock Out ----------
+        function openStockModal(id, type) {
+            const row = allParts.find(p => p.id === id);
+            if (!row) return;
+            document.getElementById('stock_part_id').value = id;
+            document.getElementById('stock_type').value = type;
+            document.getElementById('stockModalTitle').textContent = type === 'IN' ? 'Stock In' : 'Stock Out';
+            document.getElementById('stockModalPartName').textContent = `${row.part_name} — currently ${row.quantity} in stock`;
+            document.getElementById('stock_quantity').value = 1;
+            document.getElementById('stock_quantity').max = type === 'OUT' ? row.quantity : '';
+            document.getElementById('stock_reason').value = '';
+            document.getElementById('stockSubmitBtn').className = `font-semibold px-5 py-2.5 rounded-lg shadow transition text-white ${type === 'IN' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}`;
+            document.getElementById('stockModal').classList.remove('hidden');
+        }
+
+        function closeStockModal() {
+            document.getElementById('stockModal').classList.add('hidden');
+        }
+
+        document.getElementById('stockForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const id = document.getElementById('stock_part_id').value;
+            const type = document.getElementById('stock_type').value;
+            const payload = {
+                type,
+                quantity: parseInt(document.getElementById('stock_quantity').value, 10) || 0,
+                reason: document.getElementById('stock_reason').value.trim()
+            };
+
+            const btn = document.getElementById('stockSubmitBtn');
+            btn.disabled = true;
+            try {
+                const response = await fetch(`${API_BASE}/parts/${id}/transactions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    closeStockModal();
+                    loadParts();
+                    showToast(type === 'IN' ? 'Stock received!' : 'Stock removed!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // ---------- Stock History ----------
+        async function openHistoryModal(id) {
+            const row = allParts.find(p => p.id === id);
+            if (!row) return;
+            document.getElementById('historyModalPartName').textContent = row.part_name;
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">Loading...</li>';
+            document.getElementById('historyModal').classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE}/parts/${id}/transactions`);
+                const txns = await response.json();
+                if (!txns.length) {
+                    list.innerHTML = '<li class="p-4 text-center text-sm text-gray-400">No stock movements yet.</li>';
+                    return;
+                }
+                list.innerHTML = txns.map(t => {
+                    const isIn = t.type === 'IN';
+                    const refNote = t.reference_type === 'breakdown' ? ' (via Breakdown)' : t.reference_type === 'service' ? ' (via Service)' : '';
+                    return `<li class="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <div>
+                            <span class="font-semibold ${isIn ? 'text-green-700' : 'text-orange-700'}">${isIn ? '+' : '-'}${t.quantity}</span>
+                            <span class="text-gray-600 ml-1">${escapeHtml(t.reason || (isIn ? 'Stock In' : 'Stock Out'))}${refNote}</span>
+                        </div>
+                        <span class="text-xs text-gray-400">${toDateStr(t.created_at)}</span>
+                    </li>`;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<li class="p-4 text-center text-sm text-red-400 font-bold">Failed to load history.</li>';
+            }
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        // ---------- Reorder workflow ----------
+        function markAsOrdered(id) {
+            const row = allParts.find(p => p.id === id);
+            if (!row) return;
+            document.getElementById('reorder_part_id').value = id;
+            document.getElementById('reorderPartName').textContent = row.part_name;
+            document.getElementById('reorder_expected_date').value = '';
+            document.getElementById('reorderModal').classList.remove('hidden');
+        }
+
+        function closeReorderModal() {
+            document.getElementById('reorderModal').classList.add('hidden');
+        }
+
+        document.getElementById('reorderForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const id = document.getElementById('reorder_part_id').value;
+            const btn = document.getElementById('reorderSubmitBtn');
+            btn.disabled = true;
+            try {
+                const response = await fetch(`${API_BASE}/parts/${id}/reorder`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reorder_status: 'Ordered', reorder_expected_date: document.getElementById('reorder_expected_date').value || null })
+                });
+                if (response.ok) {
+                    closeReorderModal();
+                    loadParts();
+                    showToast('Marked as ordered!', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        async function cancelReorder(id) {
+            const row = allParts.find(p => p.id === id);
+            const confirmed = await showConfirm({
+                title: 'Cancel order?',
+                message: `Clear the "Ordered" status for "${row ? row.part_name : 'this part'}"?`,
+                okText: 'Clear Order',
+                okColor: 'bg-red-600 hover:bg-red-700',
+                icon: 'fa-solid fa-ban',
+                iconColor: 'bg-red-100 text-red-600'
+            });
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/parts/${id}/reorder`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reorder_status: null, reorder_expected_date: null })
+                });
+                if (response.ok) {
+                    loadParts();
+                    showToast('Order cleared.', 'success');
+                } else {
+                    const result = await response.json();
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            }
+        }
+
+        // ---------- CSV Import ----------
+        // Minimal RFC4180-ish parser: handles quoted fields with embedded
+        // commas/newlines, which a plain String.split(',') can't.
+        function parseCsv(text) {
+            const rows = [];
+            let row = [], field = '', inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i], next = text[i + 1];
+                if (inQuotes) {
+                    if (c === '"' && next === '"') { field += '"'; i++; }
+                    else if (c === '"') { inQuotes = false; }
+                    else { field += c; }
+                } else if (c === '"') {
+                    inQuotes = true;
+                } else if (c === ',') {
+                    row.push(field); field = '';
+                } else if (c === '\n' || c === '\r') {
+                    if (c === '\r' && next === '\n') i++;
+                    row.push(field); field = '';
+                    if (row.some(f => f.trim() !== '')) rows.push(row);
+                    row = [];
+                } else {
+                    field += c;
+                }
+            }
+            if (field !== '' || row.length) { row.push(field); rows.push(row); }
+            return rows;
+        }
+
+        function downloadCsvTemplate() {
+            const csv = [
+                'part_name,part_code,equipment_type,sub_type,discipline,location,initial_quantity,low_stock_threshold,notes',
+                'Door Roller Set,DR-001,Elevator,WB,Mechanical,Car,10,3,Example row - delete before importing',
+                'Handrail Belt,HR-010,Escalator,,Mechanical,,4,2,Escalator parts have no sub_type or location'
+            ].join('\r\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ElevateCare_Parts_Import_Template.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function closeImportResultModal() {
+            document.getElementById('importResultModal').classList.add('hidden');
+        }
+
+        function showImportResult(result, total) {
+            document.getElementById('importResultSummary').textContent = `Imported ${result.imported} of ${total} rows. ${result.failed.length} row(s) were skipped:`;
+            document.getElementById('importResultList').innerHTML = result.failed.map(f => `
+                <li class="px-4 py-2.5 text-sm"><span class="font-semibold text-gray-700">Row ${f.row}</span> <span class="text-red-600">${escapeHtml(f.error)}</span></li>
+            `).join('');
+            document.getElementById('importResultModal').classList.remove('hidden');
+        }
+
+        document.getElementById('csvFileInput').addEventListener('change', async function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const text = await file.text();
+            const rows = parseCsv(text);
+            if (rows.length < 2) { showToast('CSV file has no data rows.', 'error'); e.target.value = ''; return; }
+
+            // Expected header: part_name, part_code, equipment_type, sub_type,
+            // discipline, location, initial_quantity, low_stock_threshold, notes
+            const header = rows[0].map(h => h.trim().toLowerCase());
+            const dataRows = rows.slice(1).map(r => {
+                const obj = {};
+                header.forEach((key, i) => { obj[key] = (r[i] || '').trim(); });
+                return obj;
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/parts/import`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rows: dataRows })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    loadParts();
+                    showToast(`Imported ${result.imported} of ${dataRows.length} parts.`, result.imported > 0 ? 'success' : 'error');
+                    if (result.failed && result.failed.length) showImportResult(result, dataRows.length);
+                } else {
+                    showToast(result.error || GENERIC_ERROR, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(GENERIC_ERROR, 'error');
+            } finally {
+                e.target.value = '';
+            }
+        });
+
+        window.onload = loadParts;
+    </script>
 </body>
 </html>

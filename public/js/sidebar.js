@@ -19,7 +19,7 @@
 (function () {
     const NAV_ITEMS = [
         { href: 'dashboard.html', icon: 'fa-chart-line', label: 'Dashboard' },
-        { href: 'pending.html', icon: 'fa-mobile-screen', label: 'App Reviews', variant: 'app-reviews' },
+        { href: 'pending.html', icon: 'fa-mobile-screen-button', label: 'App Reviews', variant: 'app-reviews' },
         { href: 'lifts.html', icon: 'fa-building', label: 'Lifts / Escalators' },
         { href: 'breakdowns.html', icon: 'fa-triangle-exclamation', label: 'Breakdowns' },
         { href: 'services.html', icon: 'fa-screwdriver-wrench', label: 'Services' },
@@ -30,10 +30,9 @@
 
     // What each non-admin role is allowed to see in the nav — keep in sync
     // with ROLE_ACCESS in src/server.js (that's the actual enforcement;
-    // this only controls what's shown). Settings is just a per-browser
-    // light/dark preference, harmless for any logged-in role to see.
+    // this only controls what's shown).
     const ROLE_VISIBLE_PAGES = {
-        reports: ['reports.html', 'settings.html']
+        reports: ['reports.html']
     };
 
     function currentPage() {
@@ -131,15 +130,33 @@
     </div>`;
     }
 
+    // Pending-review count for the "App Reviews" badge, shown on every page
+    // (pending.html refreshes it itself after approving/discarding).
+    async function refreshPendingBadge() {
+        const badge = document.getElementById('badgeCount');
+        if (!badge) return;
+        try {
+            const res = await fetch(`${window.API_BASE}/pending`);
+            if (!res.ok) return;
+            const rows = await res.json();
+            badge.textContent = rows.length;
+            badge.classList.toggle('hidden', rows.length === 0);
+        } catch (err) { /* badge simply stays hidden */ }
+    }
+    window.refreshPendingBadge = refreshPendingBadge;
+
     async function applyRoleRestrictions() {
-        const visiblePages = await fetch(`${window.API_BASE}/auth/me`)
+        const me = await fetch(`${window.API_BASE}/auth/me`)
             .then(r => r.json())
-            .then(data => (data.role && data.role !== 'admin') ? ROLE_VISIBLE_PAGES[data.role] || [] : null)
             .catch(() => null);
 
-        if (visiblePages === null) return; // admin, or the check failed — leave the full nav as-is
+        if (!me) return; // check failed — leave the full nav as-is
 
-        renderNavList(NAV_ITEMS.filter(item => visiblePages.includes(item.href)));
+        if (me.role && me.role !== 'admin') {
+            renderNavList(NAV_ITEMS.filter(item => (ROLE_VISIBLE_PAGES[me.role] || []).includes(item.href)));
+            return;
+        }
+        refreshPendingBadge();
     }
 
     renderSidebar();
