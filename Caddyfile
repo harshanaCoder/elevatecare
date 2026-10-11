@@ -1,12 +1,25 @@
 # Local / no-domain-yet default: plain HTTP on port 80.
 :80 {
+    # Refuse huge uploads early (the app allows up to ~30 MB for mobile photos).
+    request_body {
+        max_size 32MB
+    }
     reverse_proxy app:5000
 }
 
 # Once you have a real domain pointed at your VM's public IP, replace the
 # block above with this — Caddy will then automatically get and renew a
-# free HTTPS certificate for you, no Certbot, no manual renewal:
+# free HTTPS certificate for you, no Certbot, no manual renewal. Also set
+# COOKIE_SECURE=true in .env.
 #
 # yourdomain.com {
+#     encode gzip zstd
+#     request_body {
+#         max_size 32MB
+#     }
+#     header {
+#         Strict-Transport-Security "max-age=31536000; includeSubDomains"
+#         -Server
+#     }
 #     reverse_proxy app:5000
 # }

@@ -34,6 +34,14 @@ COPY src ./src
 COPY --from=build /app/public ./public
 
 ENV NODE_ENV=production
+
+# Run as the unprivileged "node" user (built into the image), not root: if the app
+# were ever compromised, the attacker would not own the container. The uploads
+# directory is created here and handed to that user, so the named volume mounted
+# on it (see docker-compose.yml) is writable.
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+USER node
+
 EXPOSE 5000
 
 CMD ["node", "src/server.js"]

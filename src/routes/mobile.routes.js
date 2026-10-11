@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const db = require('../config/db');
 const { decodePhotos, writePhotos, deletePhotoFiles } = require('../config/photos');
 const { withTransaction } = require('../config/withTransaction');
+const { createLimiter } = require('../config/rateLimit');
 
 const router = express.Router();
 
@@ -23,10 +24,29 @@ function keyMatches(provided) {
     return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-router.post('/mobile/breakdowns', (req, res) => {
-    if (!process.env.MOBILE_API_KEY) return res.status(503).json({ error: 'Mobile submissions are not enabled on this server.' });
-    if (!keyMatches(req.get('x-api-key'))) return res.status(401).json({ error: 'Invalid API key.' });
+// Runs BEFORE the (large) JSON body parser in server.js, so an unauthenticated
+// caller can never make the server buffer a 30 MB body, and key guessing is
+// throttled: 10 wrong keys per IP per 15 minutes, 60 requests per IP per minute.
+const wrongKeys = createLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
+const anyRequests = createLimiter({ windowMs: 60 * 1000, max: 60 });
 
+function mobileGuard(req, res, next) {
+    if (res.locals.mobileKeyOk) return next();
+    anyRequests.hit(req.ip);
+    if (anyRequests.isBlocked(req.ip) || wrongKeys.isBlocked(req.ip)) {
+        res.set('Retry-After', '60');
+        return res.status(429).json({ error: 'Too many requests.' });
+    }
+    if (!process.env.MOBILE_API_KEY) return res.status(503).json({ error: 'Mobile submissions are not enabled on this server.' });
+    if (!keyMatches(req.get('x-api-key'))) {
+        wrongKeys.hit(req.ip);
+        return res.status(401).json({ error: 'Invalid API key.' });
+    }
+    res.locals.mobileKeyOk = true;
+    next();
+}
+
+router.post('/mobile/breakdowns', mobileGuard, (req, res) => {
     const b = req.body || {};
     if (!b.unit_no || !b.nature_of_breakdown) {
         return res.status(400).json({ error: 'unit_no and nature_of_breakdown are required.' });
@@ -72,3 +92,4 @@ router.post('/mobile/breakdowns', (req, res) => {
 });
 
 module.exports = router;
+module.exports.mobileGuard = mobileGuard;

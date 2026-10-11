@@ -15,33 +15,81 @@ const serviceTypesRoutes = require('./routes/serviceTypes.routes');
 const partsRoutes = require('./routes/parts.routes');
 const unitsRoutes = require('./routes/units.routes');
 const mobileRoutes = require('./routes/mobile.routes');
+const { mobileGuard } = mobileRoutes;
+const { perIpLimit } = require('./config/rateLimit');
 const { UPLOAD_DIR } = require('./config/photos');
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 const app = express();
+app.disable('x-powered-by'); // don't advertise the framework
+
 // No cors(): the pages and the API are served from the same origin, so
 // cross-origin access is never needed — leaving it off means other websites
 // can't script against this API from a visitor's browser.
-// The mobile endpoint carries base64 photos, so it gets a bigger body limit;
-// it must be mounted before the global parser (which would reject >1mb).
-app.use('/api/mobile', express.json({ limit: '30mb' }));
-app.use(express.json({ limit: '1mb' }));
 
 // Caddy (or any reverse proxy) terminates HTTPS in front of this app; trusting
-// one proxy hop lets Express see the real client IP (for login rate-limiting)
-// and the original protocol (for secure cookies).
+// one proxy hop lets Express see the real client IP (for rate-limiting) and the
+// original protocol (for secure cookies). Caddy overwrites any X-Forwarded-For a
+// visitor sends, so it can't be spoofed — which is also why port 5000 must never
+// be published to the internet (docker-compose only `expose`s it).
 app.set('trust proxy', 1);
 
-// Baseline security headers (a hand-rolled subset of what helmet sets, without
-// the extra dependency). No CSP on purpose: pages load Tailwind/Chart.js/Font
-// Awesome from CDNs and use inline scripts, so a strict policy would break them.
+// The mobile endpoint carries base64 photos, so it gets a bigger body limit —
+// but its guard (API key + rate limit) runs FIRST, so strangers can't make the
+// server buffer 30 MB. Must be mounted before the global parser below.
+app.use('/api/mobile', mobileGuard, express.json({ limit: '30mb' }));
+app.use(express.json({ limit: '1mb' }));
+
+// Security headers (a hand-rolled subset of what helmet sets, without the extra
+// dependency). The CSP still allows inline scripts/styles because every page
+// uses them, but it pins WHERE scripts, styles, fonts and connections may come
+// from (self + the three CDN hosts we use), forbids <object>/<base>/framing and
+// form posts elsewhere. The CDN files are additionally pinned by SRI hashes in
+// the HTML.
+const CSP = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+    "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
+    "font-src 'self' https://cdnjs.cloudflare.com data:",
+    "img-src 'self' data: blob:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'"
+].join('; ');
+
 app.use((req, res, next) => {
     res.set({
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'SAMEORIGIN',
-        'Referrer-Policy': 'same-origin'
+        'Referrer-Policy': 'same-origin',
+        'Content-Security-Policy': CSP,
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+        'Cross-Origin-Opener-Policy': 'same-origin'
     });
+    // Only meaningful over HTTPS; browsers ignore it on plain HTTP.
+    if (process.env.COOKIE_SECURE === 'true') res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // Data and pages behind a login must never sit in a shared/browser cache.
+    if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.endsWith('.html') || req.path === '/') {
+        res.set('Cache-Control', 'no-store');
+    }
+    next();
+});
+
+// Never show database/internal error text to the browser: log it on the server,
+// answer with a generic message. (Deliberate 4xx messages like "Only 3 in
+// stock" are untouched — only 5xx responses are rewritten.)
+app.use((req, res, next) => {
+    const original = res.json.bind(res);
+    res.json = (body) => {
+        if (res.statusCode >= 500 && body && typeof body === 'object' && body.error) {
+            console.error(`❌ ${req.method} ${req.path}:`, body.error);
+            body = { error: 'Server error. Please try again.' };
+        }
+        return original(body);
+    };
     next();
 });
 
@@ -51,6 +99,10 @@ if (!process.env.SESSION_SECRET) {
         process.exit(1);
     }
     console.warn('⚠️  SESSION_SECRET is not set in .env — using an insecure default. Fine for a quick local test, set a real one before deploying anywhere.');
+}
+
+if (IS_PRODUCTION && process.env.COOKIE_SECURE !== 'true') {
+    console.warn('⚠️  COOKIE_SECURE is not "true": the session cookie will also be sent over plain HTTP. Fine until HTTPS is on; set it to true as soon as the site is served over HTTPS.');
 }
 
 // The session itself (role, username) is stored entirely inside the cookie,
@@ -72,6 +124,26 @@ app.use(cookieSession({
     secure: process.env.COOKIE_SECURE === 'true',
     maxAge: 8 * 60 * 60 * 1000 // 8 hours
 }));
+
+// General per-IP ceiling on API traffic (a normal user is nowhere near this).
+app.use('/api', perIpLimit({ windowMs: 60 * 1000, max: 600 }));
+
+// CSRF defence in depth (the cookie is already SameSite=Lax): a browser always
+// sends an Origin header on cross-site POST/PUT/PATCH/DELETE, so any state-changing
+// API call whose Origin is a different site is refused. The mobile endpoint
+// (no cookies, API key) is exempt.
+app.use('/api', (req, res, next) => {
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || req.path.startsWith('/mobile/')) return next();
+    const origin = req.get('origin');
+    if (origin) {
+        let sameSite = false;
+        try { sameSite = new URL(origin).host === req.get('host'); } catch (err) { /* malformed Origin: refuse */ }
+        if (!sameSite) return res.status(403).json({ error: 'Cross-site request refused.' });
+    } else if (req.get('sec-fetch-site') === 'cross-site') {
+        return res.status(403).json({ error: 'Cross-site request refused.' });
+    }
+    next();
+});
 
 // 🔒 Auth gate — runs before static files and before every API route.
 // Anything not explicitly public requires a session; "admin" gets full
@@ -96,10 +168,14 @@ const ROLE_ACCESS = {
     }
 };
 
-function roleCanAccess(role, requestPath) {
+// Non-admin roles are read-only: they may only GET/HEAD the listed paths. (Some
+// of those paths — /api/units, /api/breakdown-types — also have POST/DELETE
+// handlers for admins, which must not be reachable through the same path.)
+function roleCanAccess(role, requestPath, method) {
     if (role === 'admin') return true;
     const allowed = ROLE_ACCESS[role];
     if (!allowed) return false;
+    if (method !== 'GET' && method !== 'HEAD') return false;
     return allowed.pages.includes(requestPath) || allowed.api.includes(requestPath);
 }
 
@@ -120,7 +196,7 @@ app.use((req, res, next) => {
         return res.redirect('/login.html');
     }
 
-    if (roleCanAccess(role, req.path)) return next();
+    if (roleCanAccess(role, req.path, req.method)) return next();
 
     if (req.path.startsWith('/api/')) {
         return res.status(403).json({ error: 'Not authorized for this resource.' });
@@ -156,6 +232,21 @@ app.use('/api', serviceTypesRoutes);
 app.use('/api', partsRoutes);
 app.use('/api', unitsRoutes);
 app.use('/api', mobileRoutes);
+
+// Unknown API routes: clean JSON 404 instead of Express's HTML page.
+app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
+
+// Last-resort error handler: bad JSON bodies, oversize bodies, anything thrown.
+// No stack traces or file paths ever reach the client.
+app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
+    if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Request is too large.' });
+    if (err.type === 'entity.parse.failed' || err instanceof SyntaxError) return res.status(400).json({ error: 'Invalid request body.' });
+    console.error(`❌ ${req.method} ${req.path}:`, err);
+    res.status(500).json({ error: 'Server error. Please try again.' });
+});
+
+process.on('unhandledRejection', (reason) => console.error('❌ Unhandled promise rejection:', reason));
 
 // Server Start
 const PORT = process.env.PORT || 5000;

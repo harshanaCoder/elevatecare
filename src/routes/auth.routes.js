@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const { createLimiter } = require('../config/rateLimit');
 
 const router = express.Router();
 
@@ -23,35 +24,37 @@ function loadAccounts() {
     return accounts.filter(a => a.username && a.hashB64);
 }
 
-// Brute-force guard: after MAX_FAILED wrong attempts from one IP inside the
-// window, further logins from it are refused until the window passes. In-memory
-// is fine here — one app process, and a restart just resets the counters.
-const LOGIN_WINDOW_MS = 15 * 60 * 1000;
-const MAX_FAILED = 8;
-const failedLogins = new Map(); // ip -> { count, resetAt }
+// Brute-force guards (in memory — one app process; a restart just resets them):
+//  - per IP:       8 wrong attempts / 15 min -> that IP is locked out
+//  - per username: 20 wrong attempts / 15 min -> that account refuses logins for
+//                  the rest of the window, which stops a botnet spreading guesses
+//                  over many IPs. (Trade-off: someone hammering the username can
+//                  also keep the real owner out until the window passes — with only
+//                  two fixed accounts and long random passwords, that is the safer side.)
+const WINDOW_MS = 15 * 60 * 1000;
+const ipFailures = createLimiter({ windowMs: WINDOW_MS, max: 8 });
+const userFailures = createLimiter({ windowMs: WINDOW_MS, max: 20 });
 
-function recordFailure(ip) {
-    const now = Date.now();
-    const entry = failedLogins.get(ip);
-    if (!entry || entry.resetAt <= now) failedLogins.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
-    else entry.count++;
-}
-
-setInterval(() => {
-    const now = Date.now();
-    for (const [ip, entry] of failedLogins) if (entry.resetAt <= now) failedLogins.delete(ip);
-}, LOGIN_WINDOW_MS).unref();
+// Compared against when the username doesn't exist, so a wrong username takes as
+// long as a wrong password and response time can't be used to discover usernames.
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 12);
 
 router.post('/auth/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
 
-    const attempts = failedLogins.get(req.ip);
-    if (attempts && attempts.resetAt > Date.now() && attempts.count >= MAX_FAILED) {
-        return res.status(429).json({ error: 'Too many failed attempts. Please try again in a few minutes.' });
+    // Only plain strings, and sane lengths (bcrypt ignores everything past 72 bytes
+    // anyway; a megabyte "password" is just a CPU-burning attack).
+    if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
+        return res.status(400).json({ error: 'Username and password are required.' });
+    }
+    if (username.length > 100 || password.length > 200) {
+        return res.status(400).json({ error: 'Invalid username or password.' });
     }
 
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password are required.' });
+    const userKey = username.toLowerCase();
+    if (ipFailures.isBlocked(req.ip) || userFailures.isBlocked(userKey)) {
+        res.set('Retry-After', String(ipFailures.retryAfterSeconds(req.ip)));
+        return res.status(429).json({ error: 'Too many failed attempts. Please try again in a few minutes.' });
     }
 
     const accounts = loadAccounts();
@@ -61,19 +64,17 @@ router.post('/auth/login', async (req, res) => {
     }
 
     const account = accounts.find(a => a.username === username);
-    if (!account) {
-        recordFailure(req.ip);
-        return res.status(401).json({ error: 'Invalid username or password.' });
-    }
-
-    const expectedHash = Buffer.from(account.hashB64, 'base64').toString('utf8');
+    const expectedHash = account ? Buffer.from(account.hashB64, 'base64').toString('utf8') : DUMMY_HASH;
     const passwordMatches = await bcrypt.compare(password, expectedHash);
-    if (!passwordMatches) {
-        recordFailure(req.ip);
+
+    if (!account || !passwordMatches) {
+        ipFailures.hit(req.ip);
+        userFailures.hit(userKey);
         return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
-    failedLogins.delete(req.ip);
+    ipFailures.reset(req.ip);
+    userFailures.reset(userKey);
     req.session.role = account.role;
     req.session.username = username;
     res.json({ message: '✅ Logged in!', role: account.role });

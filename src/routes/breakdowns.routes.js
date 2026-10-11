@@ -96,6 +96,8 @@ router.get('/all-breakdowns', (req, res) => {
 });
 
 router.get('/breakdowns-filter', (req, res) => {
+    const isDate = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    if (!isDate(req.query.from) || !isDate(req.query.to)) return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD).' });
     db.query('SELECT * FROM breakdowns WHERE informed_date BETWEEN ? AND ? ORDER BY informed_date DESC', [req.query.from, req.query.to], (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);

@@ -5,3 +5,5 @@ npm-debug.log*
 .gitignore
 README.md
 uploads
+.env.*
+credentials*

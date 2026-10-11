@@ -22,7 +22,7 @@ if (!password) {
     process.exit(1);
 }
 
-const hash = bcrypt.hashSync(password, 10);
+const hash = bcrypt.hashSync(password, 12);
 const encoded = Buffer.from(hash, 'utf8').toString('base64');
 
 console.log('\nAdd this to your .env as ADMIN_PASSWORD_HASH:\n');

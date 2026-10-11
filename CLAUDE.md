@@ -48,6 +48,16 @@ The session (`role`, `username`) is stored entirely inside a signed cookie — t
 
 **Session hardening:** `server.js` trusts one proxy hop (Caddy), sends basic security headers, has no `cors()` (same-origin only), and refuses to start in production without `SESSION_SECRET`. Set `COOKIE_SECURE=true` in `.env` once the Caddyfile serves HTTPS — never before, or login breaks over plain HTTP. `/api/auth/login` is rate-limited in memory (8 failed attempts per IP per 15 min → 429). `db.js` uses `dateStrings: ['DATE']`, so DATE columns reach the browser as plain `YYYY-MM-DD` (no timezone shift).
 
+**Security rules (a red-team script found and drove these fixes — don't undo them):**
+- Non-admin roles are **read-only**: `roleCanAccess` only allows GET/HEAD on their listed paths (some of those paths also have admin POST/DELETE handlers).
+- State-changing `/api` calls with a foreign `Origin` are refused (CSRF); the mobile endpoint is exempt. `/api` has a 600 req/min/IP ceiling.
+- The mobile endpoint's guard (`mobileGuard`: API key + rate limits) runs **before** its 30 MB body parser — never reorder that.
+- Login: strict string types and length caps, a dummy bcrypt compare for unknown usernames (no timing leak), lockouts per IP (8) and per username (20) per 15 min. Passwords are bcrypt cost 12.
+- 5xx responses never carry database text — `server.js` rewrites them to a generic message and logs the real one. New routes can keep `res.status(500).json({ error: err.message })`.
+- CSP + security headers are set in `server.js`; the four CDN files carry SRI hashes in the HTML (if you bump a CDN version, recompute the `integrity=` hash or the browser will block it). `/api`, `/uploads` and `.html` are `no-store`.
+- Containers: the app runs as non-root `node` with a read-only filesystem and no capabilities; with `APP_DB_USER`/`APP_DB_PASSWORD` set it connects as a limited MySQL account (`db/create-app-user.sh`: SELECT/INSERT/UPDATE/DELETE only) instead of root. Port 5000 must stay `expose`-only — Caddy overwrites `X-Forwarded-For`, which the rate limits trust.
+- `.env.production` and `credentials.txt` hold generated production settings/logins and are gitignored; `.env.example` is the only env file that is committed.
+
 **Parts stock is reconciled, not appended.** Breakdowns and services send `parts_used` as the FULL list that should be on record; `syncReferenceParts` (`src/config/partStock.js`) applies only the difference against `part_transactions`, inside the same transaction as the record write. So re-saving an edit never deducts twice, and deleting a breakdown/service returns its parts. For services, parts are recorded when the service is *completed* (`PUT /services/:id`, or `PATCH` with status Completed), never at scheduling time. A part that has been used or removed from stock can't be deleted (409).
 
 **Units are a table, not a hardcoded list.** `units` (unit_no, building, lift_type) is the single master list behind every Building → Type → Unit dropdown; pages load it through `public/js/units.js` (`loadUnits()` → `{building: {type: [units]}}`) from `GET /api/units`, and admins manage it in Settings → Units. Breakdown/service/pending-approve writes go through `requireKnownUnit` (in `units.routes.js`), so an unknown `unit_no` is rejected with 400. A unit with breakdown/service records can't be deleted (409).

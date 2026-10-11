@@ -12,3 +12,8 @@ passwords.txt
 public/css/tailwind.css
 uploads/
 *.pdf
+
+# Production settings and generated logins — never commit
+.env.*
+!.env.example
+credentials*.txt

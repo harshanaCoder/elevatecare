@@ -111,6 +111,7 @@ router.post('/parts', (req, res) => {
 router.post('/parts/import', (req, res) => {
     const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
     if (!rows.length) return res.status(400).json({ error: 'No rows to import.' });
+    if (rows.length > 1000) return res.status(400).json({ error: 'Too many rows — import at most 1000 parts per file.' });
 
     const username = (req.session && req.session.username) || null;
     const results = { imported: 0, failed: [] };
@@ -264,6 +265,10 @@ router.patch('/parts/:id/reorder', (req, res) => {
 // services in a date range (net of returns — a deleted/edited record that gave
 // parts back counts as not used). Optional ?from=YYYY-MM-DD&to=YYYY-MM-DD.
 router.get('/parts-usage', (req, res) => {
+    const isDate = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    if ((req.query.from && !isDate(req.query.from)) || (req.query.to && !isDate(req.query.to))) {
+        return res.status(400).json({ error: 'from and to must be dates (YYYY-MM-DD).' });
+    }
     const from = req.query.from || '1970-01-01';
     const to = req.query.to || '9999-12-31';
     const sql = `SELECT p.id AS part_id, p.part_name, p.part_code, p.quantity AS in_stock,
